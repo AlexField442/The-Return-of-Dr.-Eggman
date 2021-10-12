@@ -1,0 +1,61 @@
+Operating system: Microsoft Windows NT 6.2.9200.0
+Opening INI file "C:\Users\alexf\Desktop\Kega Fusion\PS\The New Sonic 2+\SonLVL INI Files\SonLVL.ini"...
+Game type is S2.
+Loading Wood Zone Act 1...
+Loading palette file "../art/palettes/SonicAndTails.bin"...
+Source: 0 Destination: 0 Length: 16
+Loading 16x16 blocks from file "../mappings/16x16/WZ1.bin", using compression Kosinski...
+Loading 128x128 chunks from file "../mappings/128x128/WZ1.bin", using compression Kosinski...
+Loading 8x8 tiles from file "../art/kosinski/WZ1.bin", using compression Kosinski...
+Loading palette file "../art/palettes/Wood Zone.bin"...
+Source: 0 Destination: 16 Length: 48
+Loading layout from file "../level/layout/WZ_1.bin", using compression Kosinski...
+Loading object definition file "obj.ini".
+Loading object definition file "objWZ.ini".
+Loading ObjectDefinition type S2ObjectDefinitions.Common.PathSwapper from "Common\PathSwapper.cs"...
+Loading type from cached assembly "dllcache\S2ObjectDefinitions.Common.PathSwapper.dll"...
+Loading ObjectDefinition type S2ObjectDefinitions.Common.InvisibleBlock from "Common\InvisibleBlock.cs"...
+Loading type from cached assembly "dllcache\S2ObjectDefinitions.Common.InvisibleBlock.dll"...
+Error loading object definition Stego:
+System.IO.FileNotFoundException: Could not find file 'C:\Users\alexf\Desktop\Kega Fusion\PS\The New Sonic 2+\mappings\sprite\Rhinobot.asm'.
+File name: 'C:\Users\alexf\Desktop\Kega Fusion\PS\The New Sonic 2+\mappings\sprite\Rhinobot.asm'
+   at System.IO.__Error.WinIOError(Int32 errorCode, String maybeFullPath)
+   at System.IO.FileStream.Init(String path, FileMode mode, FileAccess access, Int32 rights, Boolean useRights, FileShare share, Int32 bufferSize, FileOptions options, SECURITY_ATTRIBUTES secAttrs, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.FileStream..ctor(String path, FileMode mode, FileAccess access, FileShare share, Int32 bufferSize, FileOptions options, String msgPath, Boolean bFromProxy, Boolean useLongPath, Boolean checkHost)
+   at System.IO.StreamReader..ctor(String path, Encoding encoding, Boolean detectEncodingFromByteOrderMarks, Int32 bufferSize, Boolean checkHost)
+   at System.IO.StreamReader..ctor(String path, Encoding encoding)
+   at System.IO.File.InternalReadAllLines(String path, Encoding encoding)
+   at System.IO.File.ReadAllLines(String path)
+   at SonicRetro.SonLVL.API.LevelData.GetASMLabels(String file, Int32 sti, EngineVersion version) in E:\Programs\SonLVL\SonLVLAPI\LevelData.cs:line 2024
+   at SonicRetro.SonLVL.API.LevelData.ASMToBin(String file, Int32 sti, EngineVersion version, Dictionary`2& labels) in E:\Programs\SonLVL\SonLVLAPI\LevelData.cs:line 1813
+   at SonicRetro.SonLVL.API.ObjectHelper.MapASMToBmp(Byte[] artfile, String mapfileloc, Int32 frame, Int32 startpal, Boolean priority, EngineVersion version) in E:\Programs\SonLVL\SonLVLAPI\ObjectHelper.cs:line 29
+   at SonicRetro.SonLVL.API.DefaultObjectDefinition.Init(ObjectData data) in E:\Programs\SonLVL\SonLVLAPI\ObjectDefinition.cs:line 532
+Loading type from cached assembly "dllcache\S2ObjectDefinitions.Common.Spikes.dll"...
+Loading objects from file "../level/objects/WZ_1.bin", using compression Uncompressed...
+Loading rings from file "../level/rings/02_1.bin", using compression Uncompressed...
+Drawing block bitmaps...
+Drawing chunk bitmaps...
+Level loaded in 0.9527712 second(s).
+Load completed.
+Saving Wood Zone Act 1...
+System.ComponentModel.Win32Exception (0x80004005): The system cannot find the file specified
+   at System.Diagnostics.Process.StartWithShellExecuteEx(ProcessStartInfo startInfo)
+   at System.Diagnostics.Process.Start()
+   at System.Diagnostics.Process.Start(ProcessStartInfo startInfo)
+   at SonicRetro.SonLVL.GUI.MainForm.buildAndRunToolStripMenuItem_Click(Object sender, EventArgs e) in E:\Programs\SonLVL\SonLVL\MainForm.cs:line 949
+   at System.Windows.Forms.ToolStripItem.RaiseEvent(Object key, EventArgs e)
+   at System.Windows.Forms.ToolStripMenuItem.OnClick(EventArgs e)
+   at System.Windows.Forms.ToolStripItem.HandleClick(EventArgs e)
+   at System.Windows.Forms.ToolStripItem.HandleMouseUp(MouseEventArgs e)
+   at System.Windows.Forms.ToolStripItem.FireEventInteractive(EventArgs e, ToolStripItemEventType met)
+   at System.Windows.Forms.ToolStripItem.FireEvent(EventArgs e, ToolStripItemEventType met)
+   at System.Windows.Forms.ToolStrip.OnMouseUp(MouseEventArgs mea)
+   at System.Windows.Forms.ToolStripDropDown.OnMouseUp(MouseEventArgs mea)
+   at System.Windows.Forms.Control.WmMouseUp(Message& m, MouseButtons button, Int32 clicks)
+   at System.Windows.Forms.Control.WndProc(Message& m)
+   at System.Windows.Forms.ScrollableControl.WndProc(Message& m)
+   at System.Windows.Forms.ToolStrip.WndProc(Message& m)
+   at System.Windows.Forms.ToolStripDropDown.WndProc(Message& m)
+   at System.Windows.Forms.Control.ControlNativeWindow.OnMessage(Message& m)
+   at System.Windows.Forms.Control.ControlNativeWindow.WndProc(Message& m)
+   at System.Windows.Forms.NativeWindow.Callback(IntPtr hWnd, Int32 msg, IntPtr wparam, IntPtr lparam)
