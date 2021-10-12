@@ -1103,10 +1103,8 @@ Tails_InvincibilityStars:
 LevelOnly_Object_RAM_End:
 
 Object_RAM_End:
-				ds.b	$200	; unused
+				ds.b	$800	; unused
 
-Primary_Collision:		ds.b	$300
-Secondary_Collision:		ds.b	$300
 VDP_Command_Buffer:		ds.w	7*$12	; stores 18 ($12) VDP commands to issue the next time ProcessDMAQueue is called
 VDP_Command_Buffer_Slot:	ds.l	1	; stores the address of the next open slot for a queued VDP command
 
@@ -1414,11 +1412,15 @@ Demo_button_index:		ds.w	1	; index into button press demo data, for player 1
 Demo_press_counter:		ds.b	1	; frames remaining until next button press, for player 1
 				ds.b	1	; $FFFFF793 ; seems unused
 PalChangeSpeed:			ds.w	1
+
 Collision_addr:			ds.l	1
+Primary_Collision:		ds.l	1
+Secondary_Collision:		ds.l	1
+
 Camera_option:			ds.l	1
 TailsCarry_Unk1:		ds.w	1
 TailsCarry_Unk2:		ds.w	1
-				ds.b	9	; $FFFFF79E-$FFFFF7A6 ; seems unused
+				ds.b	1	; $FFFFF7A6 ; seems unused
 Boss_defeated_flag:		ds.b	1
 				ds.b	2	; $FFFFF7A8-$FFFFF7A9 ; seems unused
 Current_Boss_ID:		ds.b	1

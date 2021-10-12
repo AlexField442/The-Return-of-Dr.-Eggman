@@ -4222,7 +4222,6 @@ Level_TtlCard:
 	jsrto	(loadZoneBlockMaps).l, JmpTo_loadZoneBlockMaps
 	jsr	(LoadAnimatedBlocks).l
 	jsrto	(DrawInitialBG).l, JmpTo_DrawInitialBG
-	jsr	(ConvertCollisionArray).l
 	bsr.w	LoadCollisionIndexes
 	bsr.w	WaterEffects
 	move.w	#0,(Ctrl_1_Logical).w
@@ -5070,73 +5069,61 @@ DemoScriptPointers: zoneOrderedTable 4,1
 ; sub_49BC:
 LoadCollisionIndexes:
 	moveq	#0,d0
-	move.b	(Current_Zone).w,d0
-	lsl.w	#2,d0
-	move.l	#Primary_Collision,(Collision_addr).w
-	move.w	d0,-(sp)
-	movea.l	Off_ColP(pc,d0.w),a0
-	lea	(Primary_Collision).w,a1
-	bsr.w	KosDec
-	move.w	(sp)+,d0
-	movea.l	Off_ColS(pc,d0.w),a0
-	lea	(Secondary_Collision).w,a1
-	bra.w	KosDec
+	move.w	(Current_Zone).w,d0
+	ror.b	#1,d0
+	lsr.w	#5,d0
+	lea	(Off_Col).l,a1
+	adda.l	d0,a1
+	move.l	(a1),d0
+	move.l	d0,(Primary_Collision).w
+	addq.l	#1,d0
+	move.l	d0,(Secondary_Collision).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
+	rts
 ; End of function LoadCollisionIndexes
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
-; Pointers to primary collision indexes
+; Pointers to collision indexes
 
-; Contains an array of pointers to the primary collision index data for each
-; level. 1 pointer for each level, pointing the primary collision index.
+; Contains an array of pointers to the collision indexes data for each level.
 ; ---------------------------------------------------------------------------
-Off_ColP: zoneOrderedTable 4,1
-	zoneTableEntry.l ColP_EHZ
-	zoneTableEntry.l ColP_OWZ	; 1
-	zoneTableEntry.l ColP_WZ	; 2
-	zoneTableEntry.l ColP_SSZ	; 3
-	zoneTableEntry.l ColP_MTZ	; 4
-	zoneTableEntry.l ColP_MTZ	; 5
-	zoneTableEntry.l ColP_WFZSCZ	; 6
-	zoneTableEntry.l ColP_HTZ	; 7
-	zoneTableEntry.l ColP_HPZ	; 8
-	zoneTableEntry.l ColP_RWZ	; 9
-	zoneTableEntry.l ColP_OOZ	; 10
-	zoneTableEntry.l ColP_MCZ	; 11
-	zoneTableEntry.l ColP_CNZ	; 12
-	zoneTableEntry.l ColP_CPZDEZ	; 13
-	zoneTableEntry.l ColP_CPZDEZ	; 14
-	zoneTableEntry.l ColP_ARZ	; 15
-	zoneTableEntry.l ColP_WFZSCZ	; 16
+Off_Col: zoneOrderedTable 4,2
+	zoneTableEntry.l Col_EHZ
+	zoneTableEntry.l Col_EHZ
+	zoneTableEntry.l Col_OWZ	; 1
+	zoneTableEntry.l Col_OWZ
+	zoneTableEntry.l Col_WZ		; 2
+	zoneTableEntry.l Col_WZ
+	zoneTableEntry.l Col_SSZ	; 3
+	zoneTableEntry.l Col_SSZ
+	zoneTableEntry.l Col_MTZ	; 4
+	zoneTableEntry.l Col_MTZ
+	zoneTableEntry.l Col_MTZ	; 5
+	zoneTableEntry.l Col_MTZ
+	zoneTableEntry.l Col_WFZSCZ	; 6
+	zoneTableEntry.l Col_WFZSCZ
+	zoneTableEntry.l Col_HTZ	; 7
+	zoneTableEntry.l Col_HTZ
+	zoneTableEntry.l Col_HPZ	; 8
+	zoneTableEntry.l Col_HPZ
+	zoneTableEntry.l Col_RWZ	; 9
+	zoneTableEntry.l Col_RWZ
+	zoneTableEntry.l Col_OOZ	; 10
+	zoneTableEntry.l Col_OOZ
+	zoneTableEntry.l Col_MCZ	; 11
+	zoneTableEntry.l Col_MCZ
+	zoneTableEntry.l Col_CNZ	; 12
+	zoneTableEntry.l Col_CNZ
+	zoneTableEntry.l Col_CPZDEZ	; 13
+	zoneTableEntry.l Col_CPZDEZ
+	zoneTableEntry.l Col_CPZDEZ	; 14
+	zoneTableEntry.l Col_CPZDEZ
+	zoneTableEntry.l Col_ARZ	; 15
+	zoneTableEntry.l Col_ARZ
+	zoneTableEntry.l Col_WFZSCZ	; 16
+	zoneTableEntry.l Col_WFZSCZ
     zoneTableEnd
-
-; ---------------------------------------------------------------------------
-; Pointers to secondary collision indexes
-
-; Contains an array of pointers to the secondary collision index data for
-; each level. 1 pointer for each level, pointing the secondary collision
-; index.
-; ---------------------------------------------------------------------------
-Off_ColS: zoneOrderedTable 4,1
-	zoneTableEntry.l ColS_EHZ
-	zoneTableEntry.l ColS_OWZ	; 1
-	zoneTableEntry.l ColS_WZ	; 2
-	zoneTableEntry.l ColS_SSZ	; 3
-	zoneTableEntry.l ColP_MTZ	; 4
-	zoneTableEntry.l ColP_MTZ	; 5
-	zoneTableEntry.l ColS_WFZSCZ	; 6
-	zoneTableEntry.l ColS_HTZ	; 7
-	zoneTableEntry.l ColS_HPZ	; 8
-	zoneTableEntry.l ColS_RWZ	; 9
-	zoneTableEntry.l ColP_OOZ	; 10
-	zoneTableEntry.l ColP_MCZ	; 11
-	zoneTableEntry.l ColS_CNZ	; 12
-	zoneTableEntry.l ColS_CPZDEZ	; 13
-	zoneTableEntry.l ColS_CPZDEZ	; 14
-	zoneTableEntry.l ColS_ARZ	; 15
-	zoneTableEntry.l ColS_WFZSCZ	; 16
-    zoneTableEnd
-
 
 ; ---------------------------------------------------------------------------
 ; Oscillating number subroutine
@@ -19405,146 +19392,6 @@ loadLevelLayout:
 	lea	(Level_Layout).w,a1
 	jmpto	(KosDec).l, JmpTo_KosDec
 ; End of function loadLevelLayout
-
-; ===========================================================================
-	lea	(Level_Layout).w,a3
-	move.w	#bytesToLcnt(Level_Layout_End-Level_Layout),d1
-	moveq	#0,d0
-
--	move.l	d0,(a3)+
-	dbf	d1,-
-
-	lea	(Level_Layout).w,a3
-	moveq	#0,d1
-	bsr.w	sub_E4A2
-	lea	(Level_Layout+$80).w,a3
-	moveq	#2,d1
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-
-sub_E4A2:
-	moveq	#0,d0
-	move.w	(Current_ZoneAndAct).w,d0
-	ror.b	#1,d0
-	lsr.w	#5,d0
-	add.w	d1,d0
-	lea	(Off_Level).l,a1
-	move.w	(a1,d0.w),d0
-	lea	(a1,d0.l),a1
-	moveq	#0,d1
-	move.w	d1,d2
-	move.b	(a1)+,d1
-	move.b	(a1)+,d2
-	move.l	d1,d5
-	addq.l	#1,d5
-	moveq	#0,d3
-	move.w	#$80,d3
-	divu.w	d5,d3
-	subq.w	#1,d3
-
--	movea.l	a3,a0
-
-	move.w	d3,d4
--	move.l	a1,-(sp)
-
-	move.w	d1,d0
--	move.b	(a1)+,(a0)+
-	dbf	d0,-
-
-	movea.l	(sp)+,a1
-	dbf	d4,--
-
-	lea	(a1,d5.w),a1
-	lea	$100(a3),a3
-	dbf	d2,---
-
-	rts
-; End of function sub_E4A2
-
-; ===========================================================================
-	lea	($FE0000).l,a1
-	lea	($FE0080).l,a2
-	lea	(Chunk_Table).l,a3
-
-	move.w	#$3F,d1
--	bsr.w	sub_E59C
-	bsr.w	sub_E59C
-	dbf	d1,-
-
-	lea	($FE0000).l,a1
-	lea	($FF0000).l,a2
-
-	move.w	#$3F,d1
--	move.w	#0,(a2)+
-	dbf	d1,-
-
-	move.w	#$3FBF,d1
--	move.w	(a1)+,(a2)+
-	dbf	d1,-
-
-	rts
-; ===========================================================================
-	lea	($FE0000).l,a1
-	lea	(Chunk_Table).l,a3
-
-	moveq	#$1F,d0
--	move.l	(a1)+,(a3)+
-	dbf	d0,-
-
-	moveq	#0,d7
-	lea	($FE0000).l,a1
-	move.w	#$FF,d5
-
-loc_E55A:
-	lea	(Chunk_Table).l,a3
-	move.w	d7,d6
-
--	movem.l	a1-a3,-(sp)
-	move.w	#$3F,d0
-
--	cmpm.w	(a1)+,(a3)+
-	bne.s	+
-	dbf	d0,-
-	movem.l	(sp)+,a1-a3
-	adda.w	#$80,a1
-	dbf	d5,loc_E55A
-
-	bra.s	++
-; ===========================================================================
-+	movem.l	(sp)+,a1-a3
-	adda.w	#$80,a3
-	dbf	d6,--
-
-	moveq	#$1F,d0
--	move.l	(a1)+,(a3)+
-	dbf	d0,-
-
-	addq.l	#1,d7
-	dbf	d5,loc_E55A
-/
-	bra.s	-	; infinite loop
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-
-sub_E59C:
-	moveq	#7,d0
--	move.l	(a3)+,(a1)+
-	move.l	(a3)+,(a1)+
-	move.l	(a3)+,(a1)+
-	move.l	(a3)+,(a1)+
-	move.l	(a3)+,(a2)+
-	move.l	(a3)+,(a2)+
-	move.l	(a3)+,(a2)+
-	move.l	(a3)+,(a2)+
-	dbf	d0,-
-
-	adda.w	#$80,a1
-	adda.w	#$80,a2
-	rts
-; End of function sub_E59C
-
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
@@ -35502,10 +35349,10 @@ return_1AEA8:
 
 ; loc_1AEAA: Sonic_Floor:
 Sonic_DoLevelCollision:
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	move.b	lrb_solid_bit(a0),d5
 	move.w	x_vel(a0),d1
@@ -38522,10 +38369,10 @@ return_1C958:
 
 ; loc_1C95A: Tails_Floor:
 Tails_DoLevelCollision:
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	move.b	lrb_solid_bit(a0),d5
 	move.w	x_vel(a0),d1
@@ -40625,10 +40472,10 @@ Obj7E_MapUnc_1E1BE:	BINCLUDE "mappings/sprite/obj7E.bin"
 
 ; loc_1E234: Sonic_AnglePos:
 AnglePos:
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	move.b	top_solid_bit(a0),d5
 	btst	#3,status(a0)
@@ -41051,6 +40898,7 @@ loc_1E7E2:
 
 loc_1E7F0:	; block has some solidity
 	movea.l	(Collision_addr).w,a2	; pointer to collision data, i.e. blockID -> collisionID array
+	add.w	d0,d0
 	move.b	(a2,d0.w),d0	; get collisionID
 	andi.w	#$FF,d0
 	beq.s	loc_1E7E2
@@ -41139,6 +40987,7 @@ loc_1E88A:
 
 loc_1E898:
 	movea.l	(Collision_addr).w,a2
+	add.w	d0,d0
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	loc_1E88A
@@ -41215,6 +41064,7 @@ loc_1E922:
 
 loc_1E928:
 	movea.l	(Collision_addr).w,a2
+	add.w	d0,d0
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	loc_1E922
@@ -41303,6 +41153,7 @@ loc_1E9C2:
 
 loc_1E9D0:
 	movea.l	(Collision_addr).w,a2
+	add.w	d0,d0
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0	; relevant collisionArrayEntry
 	beq.s	loc_1E9C2
@@ -41391,6 +41242,7 @@ loc_1EA6A:
 
 loc_1EA78:
 	movea.l	(Collision_addr).w,a2
+	add.w	d0,d0
 	move.b	(a2,d0.w),d0
 	andi.w	#$FF,d0
 	beq.s	loc_1EA6A
@@ -41440,117 +41292,6 @@ loc_1EAE0:
 ; End of function FindWall2
 
 ; ---------------------------------------------------------------------------
-; The subroutine appears to convert the collision array from an unknown
-; 'raw' format to its current format, and write it to ROM, overwritting
-; the original. This doesn't work on standard read-only cartridges, and
-; would instead require a special dev cartridge.
-; This subroutine exists in Sonic 1 as well, but was oddly changed in
-; the S2 Nick Arcade prototype to just handle loading GHZ's collision
-; instead (though it too is dummied out, hence collision being broken).
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; return_1EAF0: FloorLog_Unk:
-ConvertCollisionArray:
-	rts
-; ---------------------------------------------------------------------------
-	lea	(ColArray).l,a1	; Source location of 'raw' collision array
-	lea	(ColArray).l,a2	; Destinatation of converted collision array (overwrites the original)
-
-	move.w	#$100-1,d3	; Number of blocks in collision array
-.blockLoop:
-	moveq	#16,d5		; Start on the 16th bit (the leftmost pixel)
-
-	move.w	#16-1,d2	; Width of a block in pixels
-.columnLoop:
-	moveq	#0,d4
-
-	; It seems the 'raw' format stored the collision of each pixel in rows.
-	; This block of code changes it from rows to columns, so each word contains
-	; a bit for each pixel in a column.
-	move.w	#16-1,d1	; Height of a block in pixels
-.rowLoop:
-	move.w	(a1)+,d0	; Get row of collision bits
-	lsr.l	d5,d0		; Push the selected bit of this row into the 'eXtend' flag
-	addx.w	d4,d4		; Shift d4 to the left, and insert the selected bit into bit 0
-	dbf	d1,.rowLoop	; Loop for each row of pixels in a block
-
-	move.w	d4,(a2)+	; Store column of collision bits
-	suba.w	#2*16,a1	; Back to the start of the block
-	subq.w	#1,d5		; Get next bit in the row
-	dbf	d2,.columnLoop	; Loop for each column of pixels in a block
-
-	adda.w	#2*16,a1	; Next block
-	dbf	d3,.blockLoop	; Loop for each block in the collision array
-
-	lea	(ColArray).l,a1
-	lea	(ColArray2).l,a2	; Write converted collision array to location of rotated collison array
-	bsr.s	.convertArrayToStandardFormat
-	lea	(ColArray).l,a1
-	lea	(ColArray).l,a2		; Write converted collision array to location of normal collison array
-
-; loc_1EB46: FloorLog_Unk2:
-.convertArrayToStandardFormat:
-	move.w	#$1000-1,d3	; Size of the collision array
-
-.processCollisionArrayLoop:
-	moveq	#0,d2
-	move.w	#$F,d1
-	move.w	(a1)+,d0	; Get current column of collision pixels
-	beq.s	.noCollision	; Branch if there's no collision in this column
-	bmi.s	.topPixelSolid	; Branch if top pixel of collision is solid
-
-	; Here we count, starting from the bottom, how many pixels tall
-	; the collision in this column is.
-.processColumnLoop1:
-	lsr.w	#1,d0
-	bcc.s	.pixelNotSolid1
-	addq.b	#1,d2
-.pixelNotSolid1:
-	dbf	d1,.processColumnLoop1
-
-	bra.s	.columnProcessed
-; ===========================================================================
-.topPixelSolid:
-	cmpi.w	#$FFFF,d0		; Is entire column solid?
-	beq.s	.entireColumnSolid	; Branch if so
-
-	; Here we count, starting from the top, how many pixels tall
-	; the collision in this column is (the resulting number is negative).
-.processColumnLoop2:
-	lsl.w	#1,d0
-	bcc.s	.pixelNotSolid2
-	subq.b	#1,d2
-.pixelNotSolid2:
-	dbf	d1,.processColumnLoop2
-
-	bra.s	.columnProcessed
-; ===========================================================================
-.entireColumnSolid:
-	move.w	#16,d0
-
-; loc_1EB78:
-.noCollision:
-	move.w	d0,d2
-
-; loc_1EB7A:
-.columnProcessed:
-	move.b	d2,(a2)+	; Store column collision height to ROM
-	dbf	d3,.processCollisionArrayLoop
-
-	rts
-
-; End of function ConvertCollisionArray
-
-    if gameRevision<2
-	nop
-    endif
-
-
-
-
-; ---------------------------------------------------------------------------
 ; Subroutine to calculate how much space is in front of Sonic or Tails on the ground
 ; d0 = some input angle
 ; d1 = output about how many pixels (up to some high enough amount)
@@ -41560,10 +41301,10 @@ ConvertCollisionArray:
 
 ; loc_1EB84: Sonic_WalkSpeed:
 CalcRoomInFront:
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	move.b	lrb_solid_bit(a0),d5			; Want walls or ceilings
 	move.l	x_pos(a0),d3
@@ -41624,10 +41365,10 @@ loc_1EBE6:
 
 ; sub_1EC0A:
 CalcRoomOverHead:
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	move.b	lrb_solid_bit(a0),d5
 	move.b	d0,(Primary_Angle).w
@@ -41651,10 +41392,10 @@ CalcRoomOverHead:
 
 ; loc_1EC4E: Sonic_HitFloor:
 Sonic_CheckFloor:
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	move.b	top_solid_bit(a0),d5
 	move.w	y_pos(a0),d2
@@ -41739,10 +41480,10 @@ ChkFloorEdge_Part2:
 	move.b	y_radius(a0),d0
 	ext.w	d0
 	add.w	d0,d2
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a0)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	lea	(Primary_Angle).w,a4
 	move.b	#0,(a4)
@@ -41766,10 +41507,10 @@ ChkFloorEdge2:
 	move.b	y_radius(a1),d0
 	ext.w	d0
 	add.w	d0,d2
-	move.l	#Primary_Collision,(Collision_addr).w
+	move.l	(Primary_Collision).w,(Collision_addr).w
 	cmpi.b	#$C,top_solid_bit(a1)
 	beq.s	+
-	move.l	#Secondary_Collision,(Collision_addr).w
+	move.l	(Secondary_Collision).w,(Collision_addr).w
 +
 	lea	(Primary_Angle).w,a4
 	move.b	#0,(a4)
@@ -42738,10 +42479,10 @@ Knuckles_Climbing_Wall:				  ; ...
 		move.w	#0,inertia(a0)
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
-		move.l	#Primary_Collision,(Collision_addr).w
+		move.l	(Primary_Collision).w,(Collision_addr).w
 		cmp.b	#$D,lrb_solid_bit(a0)
 		beq.s	loc_3159F0
-		move.l	#Secondary_Collision,(Collision_addr).w
+		move.l	(Secondary_Collision).w,(Collision_addr).w
 
 loc_3159F0:					  ; ...
 		move.b	lrb_solid_bit(a0),d5
@@ -44340,10 +44081,10 @@ return_316934:					  ; ...
 
 
 Knuckles_DoLevelCollision2:			  ; ...
-		move.l	#Primary_Collision,(Collision_addr).w
+		move.l	(Primary_Collision).w,(Collision_addr).w
 		cmp.b	#$C,top_solid_bit(a0)
 		beq.s	loc_31694E
-		move.l	#Secondary_Collision,(Collision_addr).w
+		move.l	(Secondary_Collision).w,(Collision_addr).w
 
 loc_31694E:					  ; ...
 		move.b	lrb_solid_bit(a0),d5
@@ -44505,10 +44246,10 @@ return_316ADE:					  ; ...
 
 
 Knuckles_DoLevelCollision:			  ; ...
-		move.l	#Primary_Collision,(Collision_addr).w
+		move.l	(Primary_Collision).w,(Collision_addr).w
 		cmp.b	#$C,top_solid_bit(a0)
 		beq.s	loc_316AF8
-		move.l	#Secondary_Collision,(Collision_addr).w
+		move.l	(Secondary_Collision).w,(Collision_addr).w
 
 loc_316AF8:					  ; ...
 		move.b	lrb_solid_bit(a0),d5
@@ -91938,104 +91679,60 @@ ColArray:	BINCLUDE	"collision/Collision array 1.bin"
 ColArray2:	BINCLUDE	"collision/Collision array 2.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; EHZ primary 16x16 collision index (Kosinski compression)
-ColP_EHZ:	BINCLUDE	"collision/EHZ primary 16x16 collision index.bin"
+; EHZ primary 16x16 collision index
+Col_EHZ:	BINCLUDE	"collision/EHZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; EHZ secondary 16x16 collision index (Kosinski compression)
-ColS_EHZ:	BINCLUDE	"collision/EHZ secondary 16x16 collision index.bin"
+; OWZ primary 16x16 collision index
+Col_OWZ:	BINCLUDE	"collision/OWZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; OWZ primary 16x16 collision index (Kosinski compression)
-ColP_OWZ:	BINCLUDE	"collision/OWZ primary 16x16 collision index.bin"
+; WZ primary 16x16 collision index
+Col_WZ:		BINCLUDE	"collision/WZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; EHZ secondary 16x16 collision index (Kosinski compression)
-ColS_OWZ:	BINCLUDE	"collision/OWZ secondary 16x16 collision index.bin"
+; SSZ primary 16x16 collision index
+Col_SSZ:	BINCLUDE	"collision/SSZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; WZ primary 16x16 collision index (Kosinski compression)
-ColP_WZ:	BINCLUDE	"collision/WZ primary 16x16 collision index.bin"
+; HTZ primary 16x16 collision index
+Col_HTZ:	BINCLUDE	"collision/HTZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; EHZ secondary 16x16 collision index (Kosinski compression)
-ColS_WZ:	BINCLUDE	"collision/WZ secondary 16x16 collision index.bin"
+; MTZ primary 16x16 collision index
+Col_MTZ:	BINCLUDE	"collision/MTZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; SSZ primary 16x16 collision index (Kosinski compression)
-ColP_SSZ:	BINCLUDE	"collision/SSZ primary 16x16 collision index.bin"
+; HPZ primary 16x16 collision index
+Col_HPZ:	BINCLUDE	"collision/HPZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; SSZ secondary 16x16 collision index (Kosinski compression)
-ColS_SSZ:	BINCLUDE	"collision/SSZ secondary 16x16 collision index.bin"
+; RWZ primary 16x16 collision index
+Col_RWZ:	BINCLUDE	"collision/RWZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; HTZ primary 16x16 collision index (Kosinski compression)
-ColP_HTZ:	BINCLUDE	"collision/HTZ primary 16x16 collision index.bin"
+; OOZ primary 16x16 collision index
+Col_OOZ:	BINCLUDE	"collision/OOZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; HTZ secondary 16x16 collision index (Kosinski compression)
-ColS_HTZ:	BINCLUDE	"collision/HTZ secondary 16x16 collision index.bin"
+; MCZ primary 16x16 collision index
+Col_MCZ:	BINCLUDE	"collision/MCZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; MTZ primary 16x16 collision index (Kosinski compression)
-ColP_MTZ:	BINCLUDE	"collision/MTZ primary 16x16 collision index.bin"
+; CNZ primary 16x16 collision index
+Col_CNZ:	BINCLUDE	"collision/CNZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; HPZ primary 16x16 collision index (Kosinski compression)
-ColP_HPZ:	BINCLUDE	"collision/HPZ primary 16x16 collision index.bin"
+; CPZ and DEZ primary 16x16 collision index
+Col_CPZDEZ:	BINCLUDE	"collision/CPZ and DEZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; HPZ secondary 16x16 collision index (Kosinski compression)
-ColS_HPZ:	BINCLUDE	"collision/HPZ secondary 16x16 collision index.bin"
+; ARZ primary 16x16 collision index
+Col_ARZ:	BINCLUDE	"collision/ARZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; RWZ primary 16x16 collision index (Kosinski compression)
-ColP_RWZ:	BINCLUDE	"collision/RWZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; RWZ secondary 16x16 collision index (Kosinski compression)
-ColS_RWZ:	BINCLUDE	"collision/RWZ secondary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; OOZ primary 16x16 collision index (Kosinski compression)
-ColP_OOZ:	BINCLUDE	"collision/OOZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; MCZ primary 16x16 collision index (Kosinski compression)
-ColP_MCZ:	BINCLUDE	"collision/MCZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; CNZ primary 16x16 collision index (Kosinski compression)
-ColP_CNZ:	BINCLUDE	"collision/CNZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; CNZ secondary 16x16 collision index (Kosinski compression)
-ColS_CNZ:	BINCLUDE	"collision/CNZ secondary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; CPZ and DEZ primary 16x16 collision index (Kosinski compression)
-ColP_CPZDEZ:	BINCLUDE	"collision/CPZ and DEZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; CPZ and DEZ secondary 16x16 collision index (Kosinski compression)
-ColS_CPZDEZ:	BINCLUDE	"collision/CPZ and DEZ secondary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; ARZ primary 16x16 collision index (Kosinski compression)
-ColP_ARZ:	BINCLUDE	"collision/ARZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; ARZ secondary 16x16 collision index (Kosinski compression)
-ColS_ARZ:	BINCLUDE	"collision/ARZ secondary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; WFZ/SCZ primary 16x16 collision index (Kosinski compression)
-ColP_WFZSCZ:	BINCLUDE	"collision/WFZ and SCZ primary 16x16 collision index.bin"
-	even
-;---------------------------------------------------------------------------------------
-; WFZ/SCZ secondary 16x16 collision index (Kosinski compression)
-ColS_WFZSCZ:	BINCLUDE	"collision/WFZ and SCZ secondary 16x16 collision index.bin"
+; WFZ/SCZ primary 16x16 collision index
+Col_WFZSCZ:	BINCLUDE	"collision/WFZ and SCZ 16x16 collision index.bin"
 	even
 ;---------------------------------------------------------------------------------------
 
