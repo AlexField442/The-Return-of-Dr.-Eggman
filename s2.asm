@@ -45,7 +45,6 @@ useFullWaterTables = 1
 ;	| If 1, zone offset tables for water levels cover all level slots instead of only slots 8-$F
 ;	| Set to 1 if you've shifted level IDs around or you want water in levels with a level slot below 8
 DebugVersion = 0
-SHC2021Demo = 0
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; AS-specific macros and assembler settings
@@ -3619,10 +3618,6 @@ TitleScreen:
 	clr.b	(Water_fullscreen_flag).w
 	move.w	#$8C81,(a6)		; H res 40 cells, no interlace, S/H disabled
 	bsr.w	ClearScreen
-
-	if SHC2021Demo=1
-	jsr	(SHC2021).l
-	endif
 
 	clearRAM Sprite_Table_Input,Sprite_Table_Input_End ; fill $AC00-$AFFF with $0
 	clearRAM TtlScr_Object_RAM,TtlScr_Object_RAM_End ; fill object RAM ($B000-$D5FF) with $0
@@ -26539,13 +26534,8 @@ LevelOrder: zoneOrderedTable 2,2	; WrdArr_LevelOrder
 	zoneTableEntry.w  ocean_wind_zone_act_1		; EHZ2
 	zoneTableEntry.w  ocean_wind_zone_act_2		; OWZ1
 	zoneTableEntry.w  wood_zone_act_1		; OWZ2
-  if SHC2021Demo=0
 	zoneTableEntry.w  wood_zone_act_2		; WZ1
 	zoneTableEntry.w  sand_shower_zone_act_1	; WZ2
-  else
-	zoneTableEntry.w  metropolis_zone_act_1		; WZ1
-	zoneTableEntry.w  metropolis_zone_act_1		; WZ2
-  endif
 	zoneTableEntry.w  sand_shower_zone_act_2	; SSZ1
 	zoneTableEntry.w  metropolis_zone_act_1		; SSZ2
 	zoneTableEntry.w  metropolis_zone_act_2		; MTZ1
@@ -26556,13 +26546,8 @@ LevelOrder: zoneOrderedTable 2,2	; WrdArr_LevelOrder
 	zoneTableEntry.w  $FFFF				; WFZ2 (unused)
 	zoneTableEntry.w  hill_top_zone_act_2		; HTZ1
 	zoneTableEntry.w  hidden_palace_zone_act_1	; HTZ2
-  if SHC2021Demo=0
 	zoneTableEntry.w  hidden_palace_zone_act_2 	; HPZ1
 	zoneTableEntry.w  rock_world_zone_act_1		; HPZ2
-  else
-	zoneTableEntry.w  oil_ocean_zone_act_1		; HPZ1
-	zoneTableEntry.w  oil_ocean_zone_act_1		; HPZ2
-  endif
 	zoneTableEntry.w  rock_world_zone_act_2		; RWZ1
 	zoneTableEntry.w  oil_ocean_zone_act_1		; RWZ2
 	zoneTableEntry.w  oil_ocean_zone_act_2		; OOZ1
@@ -96048,11 +96033,6 @@ ArtNem_SSKnuckles:dc.l -$7E457FFD,  $1140825, $14351646, $2F551866, $32730281; 0
 		dc.b -$5B,  -6,-$1F,-$31,-$1A, $28,  $F,-$4C, $49, $18;	40
 		dc.b -$6D,-$22,-$2E,-$43, $52, $49,   0,   0; 50
 		even
-
-	if SHC2021Demo=1
-SHC2021:	BINCLUDE "SHC21_Full_Sonic12.bin"
-		even
-	endif
 
 	align $8000
 ; ---------------------------------------------------------------------------
