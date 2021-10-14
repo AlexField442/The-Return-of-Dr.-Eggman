@@ -6,7 +6,7 @@ NumberOfZones = $10	; change this when adding new zones!
 ; ---------------------------------------------------------------------------
 ; size variables - you'll get an informational error if you need to change these...
 ; they are all in units of bytes
-Size_of_Snd_driver_guess =	$F64 ; approximate post-compressed size of the Z80 sound driver
+Size_of_Snd_driver_guess =	$E1D ; approximate post-compressed size of the Z80 sound driver
 
 ; ---------------------------------------------------------------------------
 ; Object Status Table offsets (for everything between Object_RAM and Primary_Collision)
@@ -348,10 +348,9 @@ VintID_TitleCard =	id(Vint_TitleCard_ptr) ; C
 VintID_UnusedE =	id(Vint_UnusedE_ptr) ; E
 VintID_Pause =		id(Vint_Pause_ptr) ; 10
 VintID_Fade =		id(Vint_Fade_ptr) ; 12
-VintID_PCM =		id(Vint_PCM_ptr) ; 14
-VintID_Menu =		id(Vint_Menu_ptr) ; 16
-VintID_Ending =		id(Vint_Ending_ptr) ; 18
-VintID_CtrlDMA =	id(Vint_CtrlDMA_ptr) ; 1A
+VintID_Menu =		id(Vint_Menu_ptr) ; 14
+VintID_Ending =		id(Vint_Ending_ptr) ; 16
+VintID_CtrlDMA =	id(Vint_CtrlDMA_ptr) ; 18
 
 ; Game modes
 offset :=	GameModesArray
@@ -888,20 +887,16 @@ SndID__End =		id(SndPtr__End)			; F4
 
 ; Sound command IDs
 offset :=	zCommandIndex
-ptrsize :=	4
-idstart :=	$F9
+ptrsize :=	2
+idstart :=	$FB
 
 CmdID__First = idstart
-MusID_StopSFX =		id(CmdPtr_StopSFX)	; F9
-MusID_FadeOut =		id(CmdPtr_FadeOut)	; FA
-MusID_SpeedUp =		id(CmdPtr_SpeedUp)	; FB
-MusID_SlowDown =	id(CmdPtr_SlowDown)	; FC
-MusID_Stop =		id(CmdPtr_Stop)		; FD
-MusID_PALMode =		id(CmdPtr_PALMode)	; FE
-CmdID__End =		id(CmdPtr__End)		; FF
-
-MusID_Pause =		$7F			; 7F
-MusID_Unpause =		$80			; 80
+MusID_StopSFX =		id(CmdPtr_StopSFX)	; FB
+MusID_FadeOut =		id(CmdPtr_FadeOut)	; FC
+MusID_SpeedUp =		id(CmdPtr_SpeedUp)	; FD
+MusID_SlowDown =	id(CmdPtr_SlowDown)	; FE
+MusID_Stop =		id(CmdPtr_Stop)		; FF
+CmdID__End =		id(CmdPtr__End)		; 100
 
 ; 2P VS results screens
 offset := TwoPlayerResultsPointers
@@ -1562,7 +1557,12 @@ Ring_spill_anim_frame:		ds.b	1
 Ring_spill_anim_accum:		ds.w	1
 				ds.b	6	; $FFFFFEA9-$FFFFFEAF ; seems unused, but cleared once
 Oscillating_variables_End
-				ds.b	$10	; $FFFFFEB0-$FFFFFEBF ; seems unused
+
+Debug_render_flags:		ds.b	1	; saves the player's render flags while entering Debug Mode, and loads it when exiting
+				ds.b	1
+Debug_art_tile:			ds.w	1	; saves the player's art tile while entering Debug Mode, and loads it when exiting
+Debug_mappings:			ds.l	1	; saves the player's mappings while entering Debug Mode, and loads it when exiting
+				ds.b	8	; $FFFFFEB8-$FFFFFEBF ; seems unused
 
 ; values for the second player (some of these only apply to 2-player games)
 Tails_top_speed:		ds.w	1	; Tails_max_vel
@@ -1694,14 +1694,7 @@ unk_FFDD:			ds.b	1	; Written to near loc_175EA, never read from
 unk_FFDE:			ds.b	1	; Written to near loc_175EA, never read from
 unk_FFDF:			ds.b	1	; Written to near loc_175EA, never read from
 
-; Values in these variables are passed to the sound driver during V-INT.
-; They use a playlist index, not a sound test index.
-Music_to_play:			ds.b	1
-SFX_to_play:			ds.b	1	; normal
-SFX_to_play_2:			ds.b	1	; alternating stereo
-unk_FFE3:			ds.b	1
-Music_to_play_2:		ds.b	1	; alternate (higher priority?) slot
-				ds.b	$B	; $FFFFFFE5-$FFFFFFEF ; seems unused
+				ds.b	$10	; $FFFFFFE0-$FFFFFFEF ; seems unused
 
 Demo_mode_flag:			ds.w	1 ; 1 if a demo is playing (2 bytes)
 Demo_number:			ds.w	1 ; which demo will play next (2 bytes)

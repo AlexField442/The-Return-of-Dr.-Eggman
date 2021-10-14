@@ -371,39 +371,24 @@ GameClrRAM:
 MainGameLoop:
 	move.b	(Game_Mode).w,d0 ; load Game Mode
 	andi.w	#$7C,d0
-	jsr	GameModesArray(pc,d0.w)	; jump to apt location in ROM
+	movea.l	GameModesArray(pc,d0.w),a0
+	jsr	(a0)	; jump to apt location in ROM
 	bra.s	MainGameLoop		; loop indefinitely
 ; ===========================================================================
 ; loc_3A2:
 GameModesArray: ;;
-GameMode_SegaScreen:	bra.w	SegaScreen		; SEGA screen mode
-GameMode_TitleScreen:	bra.w	TitleScreen		; Title screen mode
-GameMode_Demo:		bra.w	Level			; Demo mode
-GameMode_Level:		bra.w	Level			; Zone play mode
-GameMode_SpecialStage:	bra.w	SpecialStage		; Special stage play mode
-GameMode_ContinueScreen:bra.w	ContinueScreen		; Continue mode
-GameMode_2PResults:	bra.w	TwoPlayerResults	; 2P results mode
-GameMode_2PLevelSelect:	bra.w	LevelSelectMenu2P	; 2P level select mode
-GameMode_EndingSequence:bra.w	JmpTo_EndingSequence	; End sequence mode
-GameMode_OptionsMenu:	bra.w	OptionsMenu		; Options mode
-GameMode_LevelSelect:	bra.w	LevelSelectMenu		; Level select mode
-GameMode_MainOptions:	bra.w	OptionsMenu		; Main options menu
-; ===========================================================================
-; loc_3F0:
-LevelSelectMenu2P: ;;
-	jmp	(MenuScreen).l
-; ===========================================================================
-; loc_3F6:
-JmpTo_EndingSequence ; JmpTo
-	jmp	(EndingSequence).l
-; ===========================================================================
-; loc_3FC:
-OptionsMenu: ;;
-	jmp	(MenuScreen).l
-; ===========================================================================
-; loc_402:
-LevelSelectMenu: ;;
-	jmp	(MenuScreen).l
+GameMode_SegaScreen:	dc.l	SegaScreen		; SEGA screen mode
+GameMode_TitleScreen:	dc.l	TitleScreen		; Title screen mode
+GameMode_Demo:		dc.l	Level			; Demo mode
+GameMode_Level:		dc.l	Level			; Zone play mode
+GameMode_SpecialStage:	dc.l	SpecialStage		; Special stage play mode
+GameMode_ContinueScreen:dc.l	ContinueScreen		; Continue mode
+GameMode_2PResults:	dc.l	TwoPlayerResults	; 2P results mode
+GameMode_2PLevelSelect:	dc.l	MenuScreen		; 2P level select mode
+GameMode_EndingSequence:dc.l	EndingSequence		; End sequence mode
+GameMode_OptionsMenu:	dc.l	MenuScreen		; Options mode
+GameMode_LevelSelect:	dc.l	MenuScreen		; Level select mode
+GameMode_MainOptions:	dc.l	MenuScreen		; Main options menu
 ; ===========================================================================
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -439,7 +424,7 @@ VintRet:
 	rte
 ; ===========================================================================
 Vint_SwitchTbl: offsetTable
-Vint_Lag_ptr		offsetTableEntry.w Vint_Lag			;   0
+Vint_Lag_ptr		offsetTableEntry.w Vint_Lag		;   0
 Vint_SEGA_ptr:		offsetTableEntry.w Vint_SEGA		;   2
 Vint_Title_ptr:		offsetTableEntry.w Vint_Title		;   4
 Vint_Unused6_ptr:	offsetTableEntry.w Vint_Lag		;   6
@@ -449,7 +434,6 @@ Vint_TitleCard_ptr:	offsetTableEntry.w Vint_TitleCard	;  $C
 Vint_UnusedE_ptr:	offsetTableEntry.w Vint_Lag		;  $E
 Vint_Pause_ptr:		offsetTableEntry.w Vint_Pause		; $10
 Vint_Fade_ptr:		offsetTableEntry.w Vint_Fade		; $12
-Vint_PCM_ptr:		offsetTableEntry.w Vint_PCM			; $14
 Vint_Menu_ptr:		offsetTableEntry.w Vint_Menu		; $16
 Vint_Ending_ptr:	offsetTableEntry.w Vint_Ending		; $18
 Vint_CtrlDMA_ptr:	offsetTableEntry.w Vint_CtrlDMA		; $1A
@@ -463,9 +447,9 @@ Vint_Lag:
 	cmpi.b	#GameModeID_Demo,(Game_Mode).w	; Demo Mode?
 	beq.s	loc_4C4
 	cmpi.b	#GameModeID_Level,(Game_Mode).w	; Zone play mode?
-	beq.s	loc_4C4
-
-	bra.s	VintRet
+;	beq.s	loc_4C4
+	bne.s	VintRet
+;	bra.s	VintRet
 ; ---------------------------------------------------------------------------
 
 loc_4C4:
@@ -526,20 +510,6 @@ Vint_SEGA:
 
 	dma68kToVDP Horiz_Scroll_Buf,VRAM_Horiz_Scroll_Table,VRAM_Horiz_Scroll_Table_Size,VRAM
 	jsrto	(SegaScr_VInt).l, JmpTo_SegaScr_VInt
-	tst.w	(Demo_Time_left).w	; is there time left on the demo?
-	beq.w	+	; if not, return
-	subq.w	#1,(Demo_Time_left).w	; subtract 1 from time left in demo
-+
-	rts
-; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-;VintSub14
-Vint_PCM:
-	move.b	(Vint_runcount+3).w,d0
-	andi.w	#$F,d0
-	bne.s	+
-
-	bsr.w	ReadJoypads
-+
 	tst.w	(Demo_Time_left).w	; is there time left on the demo?
 	beq.w	+	; if not, return
 	subq.w	#1,(Demo_Time_left).w	; subtract 1 from time left in demo
@@ -894,8 +864,7 @@ off_D3C:	offsetTable
 	move.l	#vdpComm(VRAM_EndSeq_Plane_A_Name_Table + planeLocH40($16,$21),VRAM,WRITE),d0	;$50AC0003
 	moveq	#$16,d1
 	moveq	#$E,d2
-	jsrto	(PlaneMapToVRAM_H40).l, PlaneMapToVRAM_H40
-	rts
+	jmpto	(PlaneMapToVRAM_H40).l, PlaneMapToVRAM_H40
 ; ===========================================================================
 ;VintSub16
 Vint_Menu:
@@ -1218,7 +1187,7 @@ PauseGame:
 +
 	move.w	#1,(Game_paused).w	; freeze time
 	stopZ80
-	move.b	#MusID_Pause,(Z80_RAM+zAbsVar.StopMusic).l	; pause music
+	move.b	#$7F,(Z80_RAM+zAbsVar.StopMusic).l	; pause music
 	startZ80
 ; loc_13B2:
 Pause_Loop:
@@ -1249,7 +1218,7 @@ Pause_ChkStart:
 ; loc_13F2:
 Pause_Resume:
 	stopZ80
-	move.b	#MusID_Unpause,(Z80_RAM+zAbsVar.StopMusic).l	; unpause music
+	move.b	#$80,(Z80_RAM+zAbsVar.StopMusic).l	; unpause music
 	startZ80
 ; loc_13F8:
 Unpause:
@@ -1262,7 +1231,7 @@ Pause_DoNothing:
 Pause_SlowMo:
 	move.w	#1,(Game_paused).w
 	stopZ80
-	move.b	#MusID_Unpause,(Z80_RAM+zAbsVar.StopMusic).l	; unpause music
+	move.b	#$80,(Z80_RAM+zAbsVar.StopMusic).l	; unpause music
 	startZ80
 	rts
 ; End of function PauseGame
@@ -1312,13 +1281,13 @@ PlaneMapToVRAM_H40:
 
 ; ---------------------------------------------------------------------------
 ; Alternate subroutine to transfer a plane map to VRAM
-; (used for Special Stage background)
+; (used for Sega Screen and Special Stage background)
 ; ---------------------------------------------------------------------------
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 ; sub_142E: ShowVDPGraphics2: PlaneMapToVRAM2:
-PlaneMapToVRAM_H80_SpecialStage:
+PlaneMapToVRAM_H80:
 	lea	(VDP_data_port).l,a6
 	move.l	#vdpCommDelta(planeLocH80(0,1)),d4	; $1000000
 -	move.l	d0,VDP_control_port-VDP_data_port(a6)
@@ -1328,7 +1297,7 @@ PlaneMapToVRAM_H80_SpecialStage:
 	add.l	d4,d0
 	dbf	d2,--
 	rts
-; End of function PlaneMapToVRAM_H80_SpecialStage
+; End of function PlaneMapToVRAM_H80
 
 
 ; ---------------------------------------------------------------------------
@@ -3527,7 +3496,7 @@ SegaScreen:
 	move.l	#vdpComm(VRAM_SegaScr_Plane_B_Name_Table,VRAM,WRITE),d0
 	moveq	#$27,d1		; 40 cells wide
 	moveq	#$1B,d2		; 28 cells tall
-	bsr.w	PlaneMapToVRAM_H80_Sega
+	bsr.w	PlaneMapToVRAM_H80
 	tst.b	(Graphics_Flags).w ; are we on a Japanese Mega Drive?
 	bmi.s	SegaScreen_Contin ; if not, branch
 	; load an extra sprite to hide the TM (trademark) symbol on the SEGA screen
@@ -3558,13 +3527,11 @@ Sega_WaitPalette:
 	tst.b	(SegaScr_PalDone_Flag).w
 	beq.s	Sega_WaitPalette
 	move.b	#MusID_Emerald,d0
-	bsr.w	PlayMusic	; play "SEGA" sound
-	move.b	#VintID_SEGA,(Vint_routine).w
-	bsr.w	WaitForVint
+	bsr.w	PlayMusic	; play emerald music
 	move.w	#3*60,(Demo_Time_left).w	; 3 seconds
 ; loc_3940:
 Sega_WaitEnd:
-	move.b	#VintID_PCM,(Vint_routine).w
+	move.b	#VintID_SEGA,(Vint_routine).w
 	bsr.w	WaitForVint
 	tst.w	(Demo_Time_left).w
 	beq.s	Sega_GotoTitle
@@ -3578,26 +3545,6 @@ Sega_GotoTitle:
 	clr.w	(SegaScr_VInt_Subrout).w
 	move.b	#GameModeID_TitleScreen,(Game_Mode).w	; => TitleScreen
 	rts
-
-; ---------------------------------------------------------------------------
-; Subroutine that does the exact same thing as PlaneMapToVRAM_H80_SpecialStage
-; (this one is used at the Sega screen)
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; sub_396E: ShowVDPGraphics3: PlaneMapToVRAM3:
-PlaneMapToVRAM_H80_Sega:
-	lea	(VDP_data_port).l,a6
-	move.l	#vdpCommDelta(planeLocH80(0,1)),d4	; $1000000
--	move.l	d0,VDP_control_port-VDP_data_port(a6)
-	move.w	d1,d3
--	move.w	(a1)+,(a6)
-	dbf	d3,-
-	add.l	d4,d0
-	dbf	d2,--
-	rts
-; End of function PlaneMapToVRAM_H80_Sega
 
 ; ===========================================================================
 ; loc_3998:
@@ -3644,12 +3591,6 @@ TitleScreen:
 	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_MenuJunk),VRAM,WRITE),(VDP_control_port).l
 	lea	(ArtNem_MenuJunk).l,a0
 	bsr.w	NemDec
-;	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_Player1VS2),VRAM,WRITE),(VDP_control_port).l
-;	lea	(ArtNem_Player1VS2).l,a0
-;	bsr.w	NemDec
-;	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_FontStuff_TtlScr),VRAM,WRITE),(VDP_control_port).l
-;	lea	(ArtNem_FontStuff).l,a0
-;	bsr.w	NemDec
 	move.b	#0,(Last_star_pole_hit).w
 	move.b	#0,(Last_star_pole_hit_2P).w
 	move.w	#0,(Debug_placement_mode).w
@@ -3793,28 +3734,6 @@ TitleScreen_Loop:
 	move.l	d0,(Got_Emeralds_array+4).w
 	rts
 ; ===========================================================================
-; loc_3CF6:
-TitleScreen_CheckIfChose2P:
-	subq.b	#1,d0
-	bne.s	TitleScreen_ChoseOptions
-
-	moveq	#1,d1
-	move.w	d1,(Two_player_mode_copy).w
-	move.w	d1,(Two_player_mode).w
-	moveq	#0,d0
-	move.w	d0,(Got_Emerald).w
-	move.l	d0,(Got_Emeralds_array).w
-	move.l	d0,(Got_Emeralds_array+4).w
-	move.b	#GameModeID_2PLevelSelect,(Game_Mode).w ; => LevelSelectMenu2P
-	move.b	#emerald_hill_zone,(Current_Zone_2P).w
-	rts
-; ---------------------------------------------------------------------------
-; loc_3D20:
-TitleScreen_ChoseOptions:
-	move.b	#GameModeID_OptionsMenu,(Game_Mode).w ; => OptionsMenu
-	move.b	#0,(Options_menu_box).w
-	rts
-; ===========================================================================
 ; loc_3D2E:
 TitleScreen_Demo:
 	move.b	#MusID_FadeOut,d0
@@ -3890,38 +3809,6 @@ TailsNameCheat_Buttons:
 	dc.b	button_up_mask
 	dc.b	0	; end
 	even
-; ---------------------------------------------------------------------------------
-; Nemesis compressed art
-; 10 blocks
-; Player 1 2 VS Text
-; ---------------------------------------------------------------------------------
-; ArtNem_3DF4:
-ArtNem_Player1VS2:	BINCLUDE	"art/nemesis/1Player2VS.bin"
-	even
-
-	charset '0','9',0 ; Add character set for numbers
-	charset '*',$A ; Add character for star
-	charset '@',$B ; Add character for copyright symbol
-	charset ':',$C ; Add character for colon
-	charset '.',$D ; Add character for period
-	charset 'A','Z',$E ; Add character set for letters
-
-; word_3E82:
-CopyrightText:
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + '@',0,0)	; (C)
-	dc.w  make_art_tile(ArtTile_VRAM_Start,0,0)	;
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + '1',0,0)	; 1
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + '9',0,0)	; 9
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + '9',0,0)	; 9
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + '2',0,0)	; 2
-	dc.w  make_art_tile(ArtTile_VRAM_Start,0,0)	;
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + 'S',0,0)	; S
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + 'E',0,0)	; E
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + 'G',0,0)	; G
-	dc.w  make_art_tile(ArtTile_ArtNem_FontStuff_TtlScr + 'A',0,0)	; A
-CopyrightText_End:
-
-    charset ; Revert character set
 
     if ~~removeJmpTos
 ; sub_3E98:
@@ -3932,81 +3819,45 @@ JmpTo_SwScrl_Title ; JmpTo
     endif
 
 
-
-
 ;----------------------------------------------------------------------------
 ; Music Playlist
 ;----------------------------------------------------------------------------
 ; byte_3EA0:
-MusicList: zoneOrderedTable 1,4
+MusicList: zoneOrderedTable 1,2
 	zoneTableEntry.b MusID_EHZ	; 0 ; EHZ1
-	zoneTableEntry.b MusID_EHZ	; 0 ; EHZ1 (2 player)
 	zoneTableEntry.b MusID_EHZ2	; 0 ; EHZ2
-	zoneTableEntry.b MusID_EHZ2	; 0 ; EHZ2 (2 player)
 	zoneTableEntry.b MusID_OWZ1	; 1 ; OWZ1
-	zoneTableEntry.b MusID_OWZ1	; 1 ; OWZ1 (2 player)
 	zoneTableEntry.b MusID_OWZ1	; 1 ; OWZ2
-	zoneTableEntry.b MusID_OWZ1	; 1 ; OWZ2 (2 player)
 	zoneTableEntry.b MusID_MTZ	; 2 ; WZ1
-	zoneTableEntry.b MusID_MTZ	; 2 ; WZ1 (2 player)
 	zoneTableEntry.b MusID_MTZ	; 2 ; WZ2
-	zoneTableEntry.b MusID_MTZ	; 2 ; WZ2 (2 player)
 	zoneTableEntry.b MusID_OOZ	; 3 ; SSZ1
-	zoneTableEntry.b MusID_OOZ	; 3 ; SSZ1 (2 player)
 	zoneTableEntry.b MusID_OOZ	; 3 ; SSZ2
-	zoneTableEntry.b MusID_OOZ	; 3 ; SSZ2 (2 player)
 	zoneTableEntry.b MusID_MTZ	; 4 ; MTZ1
-	zoneTableEntry.b MusID_MTZ	; 4 ; MTZ1 (2 player)
 	zoneTableEntry.b MusID_MTZ2	; 4 ; MTZ2
-	zoneTableEntry.b MusID_MTZ2	; 4 ; MTZ2 (2 player)
 	zoneTableEntry.b MusID_MTZ3	; 5 ; MTZ3
-	zoneTableEntry.b MusID_MTZ3	; 5 ; MTZ3 (2 player)
 	zoneTableEntry.b MusID_MTZ	; 5 ; MTZ4
-	zoneTableEntry.b MusID_MTZ	; 5 ; MTZ4 (2 player)
 	zoneTableEntry.b MusID_WFZ	; 6 ; WFZ1
-	zoneTableEntry.b MusID_WFZ	; 6 ; WFZ1 (2 player)
 	zoneTableEntry.b MusID_WFZ	; 6 ; WFZ2
-	zoneTableEntry.b MusID_WFZ	; 6 ; WFZ2 (2 player)
 	zoneTableEntry.b MusID_HTZ	; 7 ; HTZ1
-	zoneTableEntry.b MusID_HTZ	; 7 ; HTZ1 (2 player)
 	zoneTableEntry.b MusID_HTZ	; 7 ; HTZ2
-	zoneTableEntry.b MusID_HTZ	; 7 ; HTZ2 (2 player)
 	zoneTableEntry.b MusID_HPZ	; 8 ; HPZ1
-	zoneTableEntry.b MusID_HPZ	; 8 ; HPZ1 (2 player)
 	zoneTableEntry.b MusID_MCZ_2P	; 8 ; HPZ2
-	zoneTableEntry.b MusID_MCZ_2P	; 8 ; HPZ2 (2 player)
 	zoneTableEntry.b MusID_SCZ	; 9
-	zoneTableEntry.b MusID_SCZ	; 9 (2 player)
 	zoneTableEntry.b MusID_SCZ	; 9
-	zoneTableEntry.b MusID_SCZ	; 9 (2 player)
 	zoneTableEntry.b MusID_CNZ_2P	; 10 ; OOZ1
-	zoneTableEntry.b MusID_CNZ_2P	; 10 ; OOZ1 (2 player)
 	zoneTableEntry.b MusID_CNZ_2P	; 10 ; OOZ2
-	zoneTableEntry.b MusID_CNZ_2P	; 10 ; OOZ2 (2 player)
 	zoneTableEntry.b MusID_MCZ	; 11 ; MCZ1
-	zoneTableEntry.b MusID_MCZ	; 11 ; MCZ1 (2 player)
 	zoneTableEntry.b MusID_MCZ	; 11 ; MCZ2
-	zoneTableEntry.b MusID_MCZ	; 11 ; MCZ2 (2 player)
 	zoneTableEntry.b MusID_CNZ	; 12 ; CNZ1
-	zoneTableEntry.b MusID_CNZ	; 12 ; CNZ1 (2 player)
 	zoneTableEntry.b MusID_CNZ2	; 12 ; CNZ2
-	zoneTableEntry.b MusID_CNZ2	; 12 ; CNZ2 (2 player)
 	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ1
-	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ1 (2 player)
 	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ2
-	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ2 (2 player)
 	zoneTableEntry.b MusID_DEZ1	; 14 ; DEZ1
-	zoneTableEntry.b MusID_DEZ1	; 14 ; DEZ1 (2 player)
 	zoneTableEntry.b MusID_DEZ2	; 14 ; DEZ2
-	zoneTableEntry.b MusID_DEZ2	; 14 ; DEZ2 (2 player)
 	zoneTableEntry.b MusID_ARZ	; 15 ; ARZ1
-	zoneTableEntry.b MusID_ARZ	; 15 ; ARZ1 (2 player)
 	zoneTableEntry.b MusID_ARZ	; 15 ; ARZ2
-	zoneTableEntry.b MusID_ARZ	; 15 ; ARZ2 (2 player)
 	zoneTableEntry.b MusID_SCZ	; 16 ; SCZ1
-	zoneTableEntry.b MusID_SCZ	; 16 ; SCZ1 (2 player)
 	zoneTableEntry.b MusID_SCZ	; 16 ; SCZ2
-	zoneTableEntry.b MusID_SCZ	; 16 ; SCZ2 (2 player)
     zoneTableEnd
 	even
 ; ===========================================================================
@@ -4185,8 +4036,7 @@ Level_GetBgm:
 	moveq	#0,d0
 	move.w	(Current_ZoneAndAct).w,d0
 	ror.b	#1,d0
-	lsr.w	#6,d0
-	add.w	(Two_player_mode).w,d0
+	lsr.w	#7,d0
 	lea	(MusicList).l,a1
 	move.b	(a1,d0.w),d0		; load from music playlist
 	move.w	d0,(Level_Music).w	; store level music
@@ -5072,7 +4922,7 @@ LoadCollisionIndexes:
 	move.w	(Current_Zone).w,d0
 	ror.b	#1,d0
 	lsr.w	#5,d0
-	lea	(Off_Col).l,a1
+	lea	Off_Col(pc),a1
 	adda.l	d0,a1
 	move.l	(a1),d0
 	move.l	d0,(Primary_Collision).w
@@ -6001,7 +5851,7 @@ loc_540C:
 ; loc_541A:
 SpecialStage_Unpause:
 	stopZ80
-	move.b	#MusID_Unpause,(Z80_RAM+zAbsVar.StopMusic).l	; unpause music
+	move.b	#$80,(Z80_RAM+zAbsVar.StopMusic).l	; unpause music
 	startZ80
 	move.b	#VintID_Level,(Vint_routine).w
 	bra.w	WaitForVint
@@ -8382,22 +8232,22 @@ SSPlaneB_Background:
 	move.l	#vdpComm(VRAM_SS_Plane_B_Name_Table + $0000,VRAM,WRITE),d0
 	moveq	#$1F,d1
 	moveq	#$1F,d2
-	jsrto	(PlaneMapToVRAM_H80_SpecialStage).l, PlaneMapToVRAM_H80_SpecialStage
+	jsrto	(PlaneMapToVRAM_H80).l, PlaneMapToVRAM_H80
 	lea	(Chunk_Table).l,a1
 	move.l	#vdpComm(VRAM_SS_Plane_B_Name_Table + $0040,VRAM,WRITE),d0
 	moveq	#$1F,d1
 	moveq	#$1F,d2
-	jsrto	(PlaneMapToVRAM_H80_SpecialStage).l, PlaneMapToVRAM_H80_SpecialStage
+	jsrto	(PlaneMapToVRAM_H80).l, PlaneMapToVRAM_H80
 	lea	(Chunk_Table).l,a1
 	move.l	#vdpComm(VRAM_SS_Plane_B_Name_Table + $0080,VRAM,WRITE),d0
 	moveq	#$1F,d1
 	moveq	#$1F,d2
-	jsrto	(PlaneMapToVRAM_H80_SpecialStage).l, PlaneMapToVRAM_H80_SpecialStage
+	jsrto	(PlaneMapToVRAM_H80).l, PlaneMapToVRAM_H80
 	lea	(Chunk_Table).l,a1
 	move.l	#vdpComm(VRAM_SS_Plane_B_Name_Table + $00C0,VRAM,WRITE),d0
 	moveq	#$1F,d1
 	moveq	#$1F,d2
-	jsrto	(PlaneMapToVRAM_H80_SpecialStage).l, PlaneMapToVRAM_H80_SpecialStage
+	jsrto	(PlaneMapToVRAM_H80).l, PlaneMapToVRAM_H80
 	move	#$2300,sr
 	rts
 ; End of function SSPlaneB_Background
@@ -14435,8 +14285,8 @@ InitCam_Index: zoneOrderedOffsetTable 2,4
 	zoneOffsetTableEntry.w InitCam_CPZ	; 13
 	zoneOffsetTableEntry.w InitCam_CPZ	; 13
 	zoneOffsetTableEntry.w InitCam_CPZ	; 13
-	zoneOffsetTableEntry.w InitCam_Null3	; 14
-	zoneOffsetTableEntry.w InitCam_Null3	; 14
+	zoneOffsetTableEntry.w InitCam_DEZ1	; 14
+	zoneOffsetTableEntry.w InitCam_DEZ1	; 14
 	zoneOffsetTableEntry.w InitCam_Null3	; 14
 	zoneOffsetTableEntry.w InitCam_Null3	; 14
 	zoneOffsetTableEntry.w InitCam_ARZ1	; 15
@@ -14448,6 +14298,12 @@ InitCam_Index: zoneOrderedOffsetTable 2,4
 	zoneOffsetTableEntry.w InitCam_SCZ	; 16
 	zoneOffsetTableEntry.w InitCam_SCZ	; 16
     zoneTableEnd
+; ===========================================================================
+
+InitCam_DEZ1:
+	addi.w	#100,d0
+	move.w	d0,(Camera_BG_Y_pos).w
+	rts
 ; ===========================================================================
 ;loc_C2B8:
 InitCam_EHZ:
@@ -14793,10 +14649,10 @@ SwScrl_Index: zoneOrderedOffsetTable 2,4	; JmpTbl_SwScrlMgr
 	zoneOffsetTableEntry.w SwScrl_CPZ	; CPZ1 (2 player)
 	zoneOffsetTableEntry.w SwScrl_CPZ	; CPZ2
 	zoneOffsetTableEntry.w SwScrl_CPZ	; CPZ2 (2 player)
-	zoneOffsetTableEntry.w SwScrl_DEZ1	; DEZ1
-	zoneOffsetTableEntry.w SwScrl_DEZ2	; DEZ1 (2 player)
-	zoneOffsetTableEntry.w SwScrl_DEZ2	; DEZ2
-	zoneOffsetTableEntry.w SwScrl_DEZ2	; DEZ2 (2 player)
+	zoneOffsetTableEntry.w SwScrl_DEZ	; DEZ1
+	zoneOffsetTableEntry.w SwScrl_DEZ	; DEZ1 (2 player)
+	zoneOffsetTableEntry.w SwScrl_DEZ	; DEZ2
+	zoneOffsetTableEntry.w SwScrl_DEZ	; DEZ2 (2 player)
 	zoneOffsetTableEntry.w SwScrl_ARZ1	; ARZ1
 	zoneOffsetTableEntry.w SwScrl_ARZ1	; ARZ1 (2 player)
 	zoneOffsetTableEntry.w SwScrl_ARZ2	; ARZ2
@@ -17011,41 +16867,14 @@ loc_D34A:
 	dbf	d1,--
 	rts
 ; ===========================================================================
-SwScrl_DEZ1:
-	cmpi.w	#$ED2,(Camera_X_pos).w
-	blo.w	SwScrl_DEZ1a
-	bra.s	SwScrl_DEZ2
 
-SwScrl_DEZ1a
-	move.w	(Camera_X_pos_diff).w,d4
-	ext.l	d4
-	asl.l	#5,d4
-	move.w	(Camera_Y_pos_diff).w,d5
-	ext.l	d5
-	asl.l	#6,d5
-	bsr.w	SetHorizVertiScrollFlagsBG
-	move.w	(Camera_BG_Y_pos).w,(Vscroll_Factor_BG).w
-	lea	(Horiz_Scroll_Buf).w,a1
-	move.w	#bytesToLcnt($380),d1
-	move.w	(Camera_X_pos).w,d0
-	neg.w	d0
-	swap	d0
-	move.w	(Camera_BG_X_pos).w,d0
-	neg.w	d0
-
--	move.l	d0,(a1)+
-	dbf	d1,-
-
-	rts
-; ===========================================================================
-; loc_D382:
-SwScrl_DEZ2:
+SwScrl_DEZ:
 	move.w	(Camera_X_pos_diff).w,d4
 	ext.l	d4
 	asl.l	#8,d4
 	move.w	(Camera_Y_pos_diff).w,d5
 	ext.l	d5
-	asl.l	#1,d5
+;	asl.l	#1,d5
 	bsr.w	SetHorizVertiScrollFlagsBG
 	move.w	(Camera_BG_Y_pos).w,(Vscroll_Factor_BG).w
 	moveq	#0,d2
@@ -62228,6 +62057,10 @@ ObjD9_CheckCharacter:
 	move.b	#$3C,2(a2)
 +
 	move.w	#-$300,y_vel(a1)
+	move.b	#AniIDSonAni_Roll,anim(a1)
+
+	move.w	#SndID_Jump,d0
+	jsr	(PlaySound).l
 	bra.w	ObjD9_CheckCharacter_End
 ; ===========================================================================
 
@@ -84771,7 +84604,8 @@ loc_3D922:
 	addq.b	#2,anim(a0)
 	st	(Control_Locked).w
 	move.w	#$1000,(Camera_Max_X_pos).w
-	rts
+	moveq	#MusID_FadeOut,d0
+	jmpto	(PlaySound).l, JmpTo12_PlaySound
 ; ===========================================================================
 
 loc_3D93C:
@@ -90077,6 +89911,10 @@ Debug_Index:	offsetTable
 ; loc_41A8A: Debug_Main:
 Debug_Init:
 	addq.b	#2,(Debug_placement_mode).w
+	move.b	render_flags(a0),(Debug_render_flags).w
+	move.w	art_tile(a0),(Debug_art_tile).w
+	move.l	mappings(a0),(Debug_mappings).w
+
 	move.w	(Camera_Min_Y_pos).w,(Camera_Min_Y_pos_Debug_Copy).w
 	move.w	(Camera_Max_Y_pos).w,(Camera_Max_Y_pos_Debug_Copy).w
 	cmpi.b	#sky_chase_zone,(Current_Zone).w
@@ -90104,17 +89942,8 @@ Debug_Init:
 	movea.w	d0,a2
 	bclr	#3,status(a2)	; clear object's standing flag
 +
-	; S1 leftover
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w ; special stage mode? (you can't enter debug mode in S2's special stage)
-	bne.s	.islevel	; if not, branch
-	moveq	#6,d0		; force zone 6's debug object list (was the ending in S1)
-	bra.s	.selectlist
-; ===========================================================================
-.islevel:
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
-
-.selectlist:
 	lea	(JmpTbl_DbgObjLists).l,a2
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
@@ -90128,15 +89957,8 @@ Debug_Init:
 	move.b	#1,(Debug_Speed).w
 ; loc_41B0C:
 Debug_Main:
-	; S1 leftover
-	moveq	#6,d0		; force zone 6's debug object list (was the ending in S1)
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; special stage mode? (you can't enter debug mode in S2's special stage)
-	beq.s	.isntlevel	; if yes, branch
-
 	moveq	#0,d0
 	move.b	(Current_Zone).w,d0
-
-.isntlevel:
 	lea	(JmpTbl_DbgObjLists).l,a2
 	add.w	d0,d0
 	adda.w	(a2,d0.w),a2
@@ -90279,22 +90101,11 @@ Debug_ExitDebugMode:
 	moveq	#0,d0
 	move.w	d0,(Debug_placement_mode).w
 	lea	(MainCharacter).w,a1 ; a1=character
-	move.w	#make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a1)
-	move.l	#Mapunc_Sonic,mappings(a1)
-	cmpi.b	#ObjID_Tails,id(a1)
-	bne.s	+
-	move.w	#make_art_tile(ArtTile_ArtUnc_Tails,0,0),art_tile(a1)
-	move.l	#MapUnc_Tails,mappings(a1)
-+
-	cmpi.b	#ObjID_Knuckles,id(a1)
-	bne.s	+
-	move.l	#Mapunc_Knux,mappings(a1)
-+
-	tst.w	(Two_player_mode).w
-	beq.s	.notTwoPlayerMode
-	move.w	#make_art_tile_2p(ArtTile_ArtUnc_Sonic,0,0),art_tile(a1)
-; loc_41C82:
-.notTwoPlayerMode:
+
+	move.b	(Debug_render_flags).w,render_flags(a1)
+	move.w	(Debug_art_tile).w,art_tile(a1)
+	move.l	(Debug_mappings).w,mappings(a1)
+
 	bsr.s	Debug_ResetPlayerStats
 	move.b	#$13,y_radius(a1)
 	move.b	#9,x_radius(a1)
@@ -90304,12 +90115,6 @@ Debug_ExitDebugMode:
 +
 	move.w	(Camera_Min_Y_pos_Debug_Copy).w,(Camera_Min_Y_pos).w
 	move.w	(Camera_Max_Y_pos_Debug_Copy).w,(Camera_Max_Y_pos).w
-	; useless leftover; this is for S1's special stage
-	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w	; special stage mode?
-	bne.s	return_41CB6		; if not, branch
-	move.b	#AniIDSonAni_Roll,(MainCharacter+anim).w
-	bset	#2,(MainCharacter+status).w
-	bset	#1,(MainCharacter+status).w
 
 return_41CB6:
 	rts
@@ -90346,8 +90151,7 @@ LoadDebugObjectSprite:
 	move.l	(a2,d0.w),mappings(a0)
 	move.w	6(a2,d0.w),art_tile(a0)
 	move.b	5(a2,d0.w),mapping_frame(a0)
-	jsrto	(Adjust2PArtPointer).l, JmpTo66_Adjust2PArtPointer
-	rts
+	jmpto	(Adjust2PArtPointer).l, JmpTo66_Adjust2PArtPointer
 ; End of function LoadDebugObjectSprite
 
 ; ===========================================================================
@@ -91875,10 +91679,6 @@ Level_CPZ2:	BINCLUDE	"level/layout/CPZ_2.bin"
 Level_DEZ1:	BINCLUDE	"level/layout/DEZ_1.bin"
 	even
 ;---------------------------------------------------------------------------------------
-; DEZ act 1a level layout (Kosinski compression)
-Level_DEZ1a:	BINCLUDE	"level/layout/DEZ_1a.bin"
-	even
-;---------------------------------------------------------------------------------------
 ; DEZ act 2 level layout (Kosinski compression)
 Level_DEZ2:	BINCLUDE	"level/layout/DEZ_2.bin"
 	even
@@ -91989,19 +91789,19 @@ ArtUnc_Waterfall3:	BINCLUDE	"art/uncompressed/ARZ waterfall patterns - 3.bin"
 ; Uncompressed art
 ; Patterns for Sonic  ; ArtUnc_50000:
 ;---------------------------------------------------------------------------------------
-	align $10000
+	align $200
 ArtUnc_Sonic:	BINCLUDE	"art/uncompressed/Sonic's art.bin"
 ;---------------------------------------------------------------------------------------
 ; Uncompressed art
 ; Patterns for Tails  ; ArtUnc_64320:
 ;---------------------------------------------------------------------------------------
-	align $10000
+	align $200
 ArtUnc_Tails:	BINCLUDE	"art/uncompressed/Tails's art.bin"
 ;---------------------------------------------------------------------------------------
 ; Uncompressed art
 ; Patterns for Knuckles
 ;---------------------------------------------------------------------------------------
-	align $10000
+	align $200
 ArtUnc_Knux:	BINCLUDE	"art/uncompressed/Knuckles' art.bin"
 ;--------------------------------------------------------------------------------------
 ; Sprite Mappings
@@ -93457,14 +93257,7 @@ MiscKoz_SpecialLevelLayout:	BINCLUDE	"misc/Special stage level layouts (Nemesis 
 ; Special stage object location list (Kosinski compression)	; MiscKoz_E35F2:
 ;--------------------------------------------------------------------------------------
 MiscKoz_SpecialObjectLocations:	BINCLUDE	"misc/Special stage object location lists (Kosinski compression).bin"
-
-;--------------------------------------------------------------------------------------
-; Filler (free space) (unnecessary; could be replaced with "even")
-;--------------------------------------------------------------------------------------
-	align $100
-
-
-
+	even
 
 ;--------------------------------------------------------------------------------------
 ; Offset index of ring locations
@@ -93542,11 +93335,7 @@ Rings_ARZ_1:	BINCLUDE	"level/rings/ARZ_1.bin"
 Rings_ARZ_2:	BINCLUDE	"level/rings/ARZ_2.bin"
 Rings_SCZ_1:	BINCLUDE	"level/rings/SCZ_1.bin"
 Rings_SCZ_2:	BINCLUDE	"level/rings/SCZ_2.bin"
-
-; --------------------------------------------------------------------------------------
-; Filler (free space) (unnecessary; could be replaced with "even")
-; --------------------------------------------------------------------------------------
-	align $200
+		even
 
 ; --------------------------------------------------------------------------------------
 ; Offset index of object locations
@@ -93695,149 +93484,30 @@ Objects_CNZ1_2P:	BINCLUDE	"level/objects/CNZ_1_2P.bin"
 	ObjectLayoutBoundary
 Objects_CNZ2_2P:	BINCLUDE	"level/objects/CNZ_2_2P.bin"
 	ObjectLayoutBoundary
-
-
-; --------------------------------------------------------------------------------------
-; Filler (free space) (unnecessary; could be replaced with "even")
-; --------------------------------------------------------------------------------------
-	align $1000
-
-
-
-
+	even
 ; ---------------------------------------------------------------------------
 ; Subroutine to load the sound driver
 ; ---------------------------------------------------------------------------
 ; sub_EC000:
 SoundDriverLoad:
-	move	sr,-(sp)
-	movem.l	d0-a6,-(sp)
-	move	#$2700,sr
-	lea	(Z80_Bus_Request).l,a3
-	lea	(Z80_Reset).l,a2
-	moveq	#0,d2
-	move.w	#$100,d1
-	move.w	d1,(a3)	; get Z80 bus
-	move.w	d1,(a2)	; release Z80 reset (was held high by console on startup)
--	btst	d2,(a3)
-	bne.s	-	; wait until the 68000 has the bus
-	jsr	DecompressSoundDriver(pc)
+	move.w	#$100,(Z80_Bus_Request).l	; stop the Z80
+	move.w	#$100,(Z80_Reset).l
+
+	lea	Snd_Driver(pc),a0
+	lea	(Z80_RAM).l,a1
+	jsr	(KosDec).l
 	btst	#0,(VDP_control_port+1).l	; check video mode
 	sne	(Z80_RAM+zPalModeByte).l	; set if PAL
-	move.w	d2,(a2)	; hold Z80 reset
-	move.w	d2,(a3)	; release Z80 bus
-	moveq	#$E6,d0
--	dbf	d0,-	; wait for 2,314 cycles
-	move.w	d1,(a2)	; release Z80 reset
-	movem.l	(sp)+,d0-a6
-	move	(sp)+,sr
+
+	moveq	#0,d1
+	move.w	d1,(Z80_Reset).l
+	nop
+	nop
+	nop
+	nop
+	move.w	#$100,(Z80_Reset).l
+	move.w	d1,(Z80_Bus_Request).l	; start the Z80
 	rts
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-; Handles the decompression of the sound driver (Saxman compression, an LZSS variant)
-; https://segaretro.org/Saxman_compression
-
-; a4 == start of decompressed data (used for dictionary match offsets)
-; a5 == current address of end of decompressed data
-; a6 == current address in compressed sound driver
-; d3 == length of match minus 1
-; d4 == offset into decompressed data of dictionary match
-; d5 == number of bytes decompressed so far
-; d6 == descriptor field
-; d7 == bytes left to decompress
-
-; Interestingly, this appears to be a direct translation of the Z80 version in the sound driver
-; (or maybe the Z80 version is a direct translation of this...)
-
-; loc_EC04A:
-DecompressSoundDriver:
-	lea	Snd_Driver(pc),a6
-; WARNING: the build script needs editing if you rename this label
-movewZ80CompSize:	move.w	#Snd_Driver_End-Snd_Driver,d7 ; patched (by fixpointer.exe) after compression since the exact size can't be known beforehand
-	moveq	#0,d6	; The decompressor knows it's run out of descriptor bits when it starts reading 0's in bit 8
-	lea	(Z80_RAM).l,a5
-	moveq	#0,d5
-	lea	(Z80_RAM).l,a4
-; loc_EC062:
-SaxDec_Loop:
-	lsr.w	#1,d6	; Next descriptor bit
-	btst	#8,d6	; Check if we've run out of bits
-	bne.s	+	; (lsr 'shifts in' 0's)
-	jsr	SaxDec_GetByte(pc)
-	move.b	d0,d6
-	ori.w	#$FF00,d6	; These set bits will disappear from the high byte as the register is shifted
-+
-	btst	#0,d6
-	beq.s	SaxDec_ReadCompressed
-
-; SaxDec_ReadUncompressed:
-	jsr	SaxDec_GetByte(pc)
-	move.b	d0,(a5)+
-	addq.w	#1,d5
-	bra.w	SaxDec_Loop
-; ---------------------------------------------------------------------------
-; loc_EC086:
-SaxDec_ReadCompressed:
-	jsr	SaxDec_GetByte(pc)
-	moveq	#0,d4
-	move.b	d0,d4
-	jsr	SaxDec_GetByte(pc)
-	move.b	d0,d3
-	andi.w	#$F,d3
-	addq.w	#2,d3	; d3 is the length of the match minus 1
-	andi.w	#$F0,d0
-	lsl.w	#4,d0
-	add.w	d0,d4
-	addi.w	#$12,d4
-	andi.w	#$FFF,d4	; d4 is the offset into the current $1000-byte window
-	; This part is a little tricky. You see, d4 currently contains the low three nibbles of an offset into the decompressed data,
-	; where the dictionary match lies. The way the high nibble is decided is first by taking it from d5 - the offset of the end
-	; of the decompressed data so far. Then, we see if the resulting offset in d4 is somehow higher than d5.
-	; If it is, then it's invalid... *unless* you subtract $1000 from it, in which case it refers to data in the previous $1000 block of bytes.
-	; This is all just a really gimmicky way of having an offset with a range of $1000 bytes from the end of the decompressed data.
-	; If, however, we cannot subtract $1000 because that would put the pointer before the start of the decompressed data, then
-	; this is actually a 'zero-fill' match, which encodes a series of zeroes.
-	move.w	d5,d0
-	andi.w	#$F000,d0
-	add.w	d0,d4
-	cmp.w	d4,d5
-	bhs.s	SaxDec_IsDictionaryReference
-	subi.w	#$1000,d4
-	bcc.s	SaxDec_IsDictionaryReference
-
-; SaxDec_IsSequenceOfZeroes:
-	add.w	d3,d5
-	addq.w	#1,d5
-
--	move.b	#0,(a5)+
-	dbf	d3,-
-
-	bra.w	SaxDec_Loop
-; ---------------------------------------------------------------------------
-; loc_EC0CC:
-SaxDec_IsDictionaryReference:
-	add.w	d3,d5
-	addq.w	#1,d5
-
--	move.b	(a4,d4.w),(a5)+
-	addq.w	#1,d4
-	dbf	d3,-
-
-	bra.w	SaxDec_Loop
-; End of function DecompressSoundDriver
-
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; sub_EC0DE:
-SaxDec_GetByte:
-	move.b	(a6)+,d0
-	subq.w	#1,d7	; Decrement remaining number of bytes
-	bne.s	+
-	addq.w	#4,sp	; Exit the decompressor by meddling with the stack
-+
-	rts
-; End of function SaxDec_GetByte
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -93851,16 +93521,16 @@ Snd_Driver:
 	padding off
 	!org (Snd_Driver+Size_of_Snd_driver_guess) ; don't worry; I know what I'm doing
 
-
 ; loc_ED04C:
 Snd_Driver_End:
-
-SonicDriverVer = 2
-		include	"sound/_smps2asm_inc.asm"
 
 ; ---------------------------------------------------------------------------
 ; Music pointers
 ; ---------------------------------------------------------------------------
+
+SonicDriverVer = 2
+		include	"sound/_smps2asm_inc.asm"
+
 ; loc_F0000:
 MusicPoint1:	startBank
 Mus_Continue:   BINCLUDE	"sound/music/Continue.bin"
@@ -93872,6 +93542,46 @@ Mus_MTZ3:	include		"sound/music/MTZ3.asm"
 Mus_CNZ2:	include		"sound/music/CNZ2.asm"
 Mus_BLZ1:	include		"sound/music/BLZ1.asm"
 	finishBank
+
+; ---------------------------------------------------------------------------
+; DAC samples, placed right after music pointers so it is aligned properly
+; ---------------------------------------------------------------------------
+
+SndDAC_Sample1:
+	BINCLUDE	"sound/DAC/Sample 1.bin"
+SndDAC_Sample1_End
+
+SndDAC_Sample2:
+	BINCLUDE	"sound/DAC/Sample 2.bin"
+SndDAC_Sample2_End
+
+SndDAC_Sample5:
+	BINCLUDE	"sound/DAC/Sample 5.bin"
+SndDAC_Sample5_End
+
+SndDAC_Sample6:
+	BINCLUDE	"sound/DAC/Sample 6.bin"
+SndDAC_Sample6_End
+
+SndDAC_Sample3:
+	BINCLUDE	"sound/DAC/Sample 3.bin"
+SndDAC_Sample3_End
+
+SndDAC_Sample4:
+	BINCLUDE	"sound/DAC/Sample 4.bin"
+SndDAC_Sample4_End
+
+SndDAC_Sample7:
+	BINCLUDE	"sound/DAC/Sample 7.bin"
+SndDAC_Sample7_End
+
+SndDAC_Sample8:
+	BINCLUDE	"sound/DAC/Sample 8.bin"
+SndDAC_Sample8_End
+
+SndDAC_Sample9:
+	BINCLUDE	"sound/DAC/Sample 9.bin"
+SndDAC_Sample9_End
 
 ; --------------------------------------------------------------------
 ; Nemesis compressed art (20 blocks)
@@ -94088,7 +93798,7 @@ SndPtr_Rumbling:	rom_ptr_z80	Sound37	; rumbling
 SndPtr_Smash:		rom_ptr_z80	Sound39	; smash/breaking
 			rom_ptr_z80	Sound3A	; nondescript ding (unused)
 SndPtr_DoorSlam:	rom_ptr_z80	Sound3B	; door slamming shut
-SndPtr_SpindashRelease:	rom_ptr_z80	Sound3C	; spindash unleashed
+SndPtr_SpindashRelease:	rom_ptr_z80	Snd_SpindashRelease	; spindash unleashed
 SndPtr_Hammer:		rom_ptr_z80	Sound3D	; slide-thunk
 SndPtr_Roll:		rom_ptr_z80	Sound3E	; rolling sound
 SndPtr_ContinueJingle:	rom_ptr_z80	Sound3F	; got continue
@@ -94125,7 +93835,7 @@ SndPtr_ArrowStick:	rom_ptr_z80	Sound5D	; chain clink
 SndPtr_Helicopter:
 SndPtr_WingFortress:	rom_ptr_z80	Sound5E	; helicopter
 SndPtr_SuperTransform:	rom_ptr_z80	Sound5F
-SndPtr_SpindashRev:	rom_ptr_z80	Sound60	; spindash charge
+SndPtr_SpindashRev:	rom_ptr_z80	Snd_SpindashRev		; spindash charge
 SndPtr_Rumbling2:	rom_ptr_z80	Sound61	; rumbling
 SndPtr_CNZLaunch:	rom_ptr_z80	Sound62
 SndPtr_Flipper:		rom_ptr_z80	Sound63	; CNZ blooing bumper
@@ -94416,13 +94126,7 @@ ssamp3B:	dc.b $3C,$00,$00,$00,$00,$1F,$1F,$1F,$1F,$00,$0F,$16
 		dc.b $0F,$00,$00,$00,$00,$0F,$FF,$AF,$FF,$00,$0A,$80,$80
 
 ; spindash unleashed
-Sound3C:	dc.w z80_ptr(ssamp3C),$0102
-		dc.w $8005,z80_ptr(+),$9000
-		dc.w $80C0,z80_ptr(++),$0000
-+		dc.b $EF,$00,$F0,$01,$01,$C5,$1A,$CD,$07,$F2
-+		dc.b $F5,$07,$80,$07,$F0,$01,$02,$05,$FF,$F3,$E7,$BB,$4F,$F2
-ssamp3C:	dc.b $FD,$09,$00,$03,$00,$1F,$1F,$1F,$1F,$10,$0C,$0C
-		dc.b $0C,$0B,$10,$1F,$05,$1F,$4F,$2F,$2F,$09,$92,$84,$8E
+Snd_SpindashRelease:	include	"sound/sfx/Spin Dash Release.asm"
 
 ; slide-thunk
 Sound3D:	dc.w z80_ptr(ssamp3D),$0102
@@ -94772,14 +94476,7 @@ ssamp5F:	dc.b $FD,$09,$00,$03,$00,$1F,$1F,$1F,$1F,$10,$0C,$0C
 		dc.b $05,$03,$03,$03,$05,$1F,$6F,$8F,$5F,$1F,$22,$1F,$80
 
 ; spindash charge
-Sound60:	dc.w z80_ptr(ssamp60),$0101
-		dc.w $8005,z80_ptr(+),$FE00
-+		dc.b $EF,$00,$F0,$00,$01,$20,$F6,$C4,$16,$E7,$F4,$D0,$18,$E7
--		dc.b $04,$E7,$E6
-		dc.w $03F7,$0010,z80_ptr(-)
-		dc.b $F2
-ssamp60:	dc.b $34,$00,$03,$0C,$09,$9F,$8C,$8F,$95,$00,$00,$00
-		dc.b $00,$00,$00,$00,$00,$0F,$0F,$0F,$0F,$00,$1D,$00,$00
+Snd_SpindashRev:	include	"sound/sfx/Spin Dash Rev.asm"
 
 ; rumbling
 Sound61:	dc.w z80_ptr(ssamp61),$0101
@@ -95731,51 +95428,6 @@ ArtNem_SSKnuckles:dc.l -$7E457FFD,  $1140825, $14351646, $2F551866, $32730281; 0
 		dc.b -$6D,-$22,-$2E,-$43, $52, $49,   0,   0; 50
 		even
 
-	align $8000
-; ---------------------------------------------------------------------------
-; DAC samples
-; ---------------------------------------------------------------------------
-; loc_ED100:
-SndDAC_Start:
-
-SndDAC_Sample1:
-	BINCLUDE	"sound/DAC/Sample 1.bin"
-SndDAC_Sample1_End
-
-SndDAC_Sample2:
-	BINCLUDE	"sound/DAC/Sample 2.bin"
-SndDAC_Sample2_End
-
-SndDAC_Sample5:
-	BINCLUDE	"sound/DAC/Sample 5.bin"
-SndDAC_Sample5_End
-
-SndDAC_Sample6:
-	BINCLUDE	"sound/DAC/Sample 6.bin"
-SndDAC_Sample6_End
-
-SndDAC_Sample3:
-	BINCLUDE	"sound/DAC/Sample 3.bin"
-SndDAC_Sample3_End
-
-SndDAC_Sample4:
-	BINCLUDE	"sound/DAC/Sample 4.bin"
-SndDAC_Sample4_End
-
-SndDAC_Sample7:
-	BINCLUDE	"sound/DAC/Sample 7.bin"
-SndDAC_Sample7_End
-
-SndDAC_Sample8:
-	BINCLUDE	"sound/DAC/Sample 8.bin"
-SndDAC_Sample8_End
-
-SndDAC_Sample9:
-	BINCLUDE	"sound/DAC/Sample 9.bin"
-SndDAC_Sample9_End
-
-SndDAC_End
-
 	dc.b	"#FreeTheAustralianWeed!"
 
 ; end of 'ROM'
@@ -95791,6 +95443,6 @@ paddingSoFar	:= paddingSoFar+1
 		message "ROM size is $\{*} bytes (\{*/1024.0} kb). About $\{paddingSoFar} bytes are padding. "
 	endif
 	; share these symbols externally (WARNING: don't rename, move or remove these labels!)
-	shared word_728C_user,Obj5F_MapUnc_7240,off_3A294,MapRUnc_Sonic,movewZ80CompSize
+	shared word_728C_user,Obj5F_MapUnc_7240,off_3A294,MapRUnc_Sonic
 EndOfRom:
 	END

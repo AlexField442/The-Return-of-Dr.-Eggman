@@ -5,14 +5,14 @@ DEZ1_Header:
 	smpsHeaderTempo     $02, $04
 
 	smpsHeaderDAC       DEZ1_DAC
-	smpsHeaderFM        DEZ1_FM1,	$F4, $11
-	smpsHeaderFM        DEZ1_FM2,	$F4, $0B
-	smpsHeaderFM        DEZ1_FM3,	$F4, $0E
-	smpsHeaderFM        DEZ1_FM4,	$F4, $0E
-	smpsHeaderFM        DEZ1_FM5,	$F4, $11
-	smpsHeaderPSG       DEZ1_PSG1,	$C4, $05, $00, $00
-	smpsHeaderPSG       DEZ1_PSG2,	$C4, $05, $00, $00
-	smpsHeaderPSG       DEZ1_PSG3,	$C4, $04, $00, $00
+	smpsHeaderFM        DEZ1_FM1,	$F4, $15
+	smpsHeaderFM        DEZ1_FM2,	$F4, $0F
+	smpsHeaderFM        DEZ1_FM3,	$F4, $13
+	smpsHeaderFM        DEZ1_FM4,	$F4, $13
+	smpsHeaderFM        DEZ1_FM5,	$F4, $15
+	smpsHeaderPSG       DEZ1_PSG1,	$C4, $09, $00, $00
+	smpsHeaderPSG       DEZ1_PSG2,	$C4, $09, $00, $00
+	smpsHeaderPSG       DEZ1_PSG3,	$C4, $08, $00, $00
 
 ; FM1 Data
 DEZ1_FM1:

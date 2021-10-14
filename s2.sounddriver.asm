@@ -195,6 +195,7 @@ zAbsVar:		zVar
 zTracksStart:		; This is the beginning of all BGM track memory
 zSongDACFMStart:
 zSongDAC:		zTrack
+zSongFMPSGStart:
 zSongFMStart:
 zSongFM1:		zTrack
 zSongFM2:		zTrack
@@ -209,6 +210,7 @@ zSongPSG1:		zTrack
 zSongPSG2:		zTrack
 zSongPSG3:		zTrack
 zSongPSGEnd:
+zSongFMPSGEnd:
 zTracksEnd:
 
 zTracksSFXStart:
@@ -242,6 +244,7 @@ zTracksSaveEnd:
 
 MUSIC_TRACK_COUNT = (zTracksEnd-zTracksStart)/zTrack.len
 MUSIC_DAC_FM_TRACK_COUNT = (zSongDACFMEnd-zSongDACFMStart)/zTrack.len
+MUSIC_FM_PSG_TRACK_COUNT = (zSongFMPSGEnd-zSongFMPSGStart)/zTrack.len
 MUSIC_FM_TRACK_COUNT = (zSongFMEnd-zSongFMStart)/zTrack.len
 MUSIC_PSG_TRACK_COUNT = (zSongPSGEnd-zSongPSGStart)/zTrack.len
 
@@ -303,19 +306,6 @@ zPalModeByte:
 	db	0
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
-    if OptimiseDriver=0	; This is redundant: the Z80 is slow enough to not need to worry about this
-	align	8
-;zsub_8
-zFMBusyWait:    rsttarget
-	; Performs the annoying task of waiting for the FM to not be busy
-	ld	a,(zYM2612_A0)
-	add	a,a
-	jr	c,zFMBusyWait
-	ret
-; End of function zFMBusyWait
-    endif
-
-; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 ; performs a bank switch to where the music for the current track is at
 	align	8
@@ -329,25 +319,15 @@ zBankSwitchToMusic:
 ;zsub_10
 zWriteFMIorII:    rsttarget
 	bit	2,(ix+zTrack.VoiceControl)
-	jr	z,zWriteFMI
-	jr	zWriteFMII
-; End of function zWriteFMIorII
+	jr	nz,zWriteFMII
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 	align	8
 ;zsub_18
 zWriteFMI:    rsttarget
 	; Write reg/data pair to part I; 'a' is register, 'c' is data
-    if OptimiseDriver=0
-	push	af
-	rst	zFMBusyWait ; 'rst' is like 'call' but only works for 8-byte aligned addresses <= 38h
-	pop	af
-    endif
 	ld	(zYM2612_A0),a
 	push	af
-    if OptimiseDriver=0
-	rst	zFMBusyWait
-    endif
 	ld	a,c
 	ld	(zYM2612_D0),a
 	pop	af
@@ -359,16 +339,8 @@ zWriteFMI:    rsttarget
 ;zsub_28
 zWriteFMII:    rsttarget
 	; Write reg/data pair to part II; 'a' is register, 'c' is data
-    if OptimiseDriver=0
-	push	af
-	rst	zFMBusyWait
-	pop	af
-    endif
 	ld	(zYM2612_A1),a
 	push	af
-    if OptimiseDriver=0
-	rst	zFMBusyWait
-    endif
 	ld	a,c
 	ld	(zYM2612_D1),a
 	pop	af
@@ -446,24 +418,13 @@ zUpdateEverything:
     endif
 
 	; FM SFX channels
-	ld	b,SFX_FM_TRACK_COUNT		; Only 3 FM channels for SFX (FM3, FM4, FM5)
+	ld	b,SFX_TRACK_COUNT		; Only 3 FM channels for SFX (FM3, FM4, FM5) + all PSG channels
 
 -	push	bc
 	ld	de,zTrack.len			; Spacing between tracks
 	add	ix,de				; Next track
 	bit	7,(ix+zTrack.PlaybackControl)	; Is it playing?
-	call	nz,zFMUpdateTrack		; If it is, go update it
-	pop	bc
-	djnz	-
-
-	; PSG SFX channels
-	ld	b,SFX_PSG_TRACK_COUNT		; All PSG channels available
-
--	push	bc
-	ld	de,zTrack.len			; Spacing between tracks
-	add	ix,de				; Next track
-	bit	7,(ix+zTrack.PlaybackControl)	; Is it playing?
-	call	nz,zPSGUpdateTrack		; If it is, go update it
+	call	nz,zUpdateTrack		; If it is, go update it
 	pop	bc
 	djnz	-
 
@@ -544,23 +505,13 @@ zUpdateMusic:
 	call	nz,zDACUpdateTrack		; If so, zDACUpdateTrack
 	xor	a				; Clear a
 	ld	(zAbsVar.DACUpdating),a		; Store 0 to DACUpdating
-	ld	b,MUSIC_FM_TRACK_COUNT		; Loop 6 times (FM)...
+	ld	b,MUSIC_FM_PSG_TRACK_COUNT	; Loop 9 times (FM+PSG)...
 
 -	push	bc
 	ld	de,zTrack.len			; Space between tracks
 	add	ix,de				; Go to next track
 	bit	7,(ix+zTrack.PlaybackControl)	; Is bit 7 (80h) set on playback control byte? (means "is playing")
-	call	nz,zFMUpdateTrack		; If so...
-	pop	bc
-	djnz	-
-
-	ld	b,MUSIC_PSG_TRACK_COUNT		; Loop 3 times (PSG)...
-
--	push	bc
-	ld	de,zTrack.len			; Space between tracks
-	add	ix,de				; Go to next track
-	bit	7,(ix+zTrack.PlaybackControl)	; Is this track playing?
-	call	nz,zPSGUpdateTrack		; If so...
+	call	nz,zUpdateTrack			; If so...
 	pop	bc
 	djnz	-
 
@@ -794,6 +745,10 @@ zloc_22A:
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 
+zUpdateTrack:
+	bit	7,(ix+zTrack.VoiceControl)		; Is this a PSG track?
+	jp	nz, zPSGUpdateTrack			; If so, jump to zPSGUpdateTrack
+
 ;zsub_237
 zFMUpdateTrack:
 	dec	(ix+zTrack.DurationTimeout)	; Decrement duration
@@ -850,9 +805,8 @@ zFMSetFreq:
 	sub	80h
 	jr	z,zFMDoRest		; If this is a rest, jump to zFMDoRest
 	add	a,(ix+zTrack.Transpose)	; Add current channel transpose (coord flag E9)
-	add	a,a			; Offset into Frequency table...
-    if OptimiseDriver
-	ld	d,12*2			; 12 notes per octave
+
+	ld	d,12			; 12 notes per octave
 	ld	c,0			; clear c (will hold octave bits)
 
 -	sub	d			; Subtract 1 octave from the note
@@ -864,23 +818,20 @@ zFMSetFreq:
 	sla	c
 	sla	c
 	sla	c			; multiply octave value by 8, to get final octave bits
-    endif
-	add	a,zFrequencies&0FFh
-	ld	(zloc_292+2),a	; store into the instruction after zloc_292 (self-modifying code)
+	ld	de,zFrequencies
+SetFMPSGFreq:
+	add	a,a
+	add	a,e	; DE += 0A
+	ld	e,a
+	adc	a,d
+	sub	a,e
 	ld	d,a
-	adc	a,(zFrequencies&0FF00h)>>8
-	sub	d
-	ld	(zloc_292+3),a	; this is how you could store the high byte of the pointer too (unnecessary if it's in the right range)
-zloc_292:
-	ld	de,(zFrequencies)	; Stores frequency into "de"
-	ld	(ix+zTrack.FreqLow),e	; Frequency low byte   -> trackPtr + 0Dh
-    if OptimiseDriver
-	ld	a,d
-	or	c
-	ld	(ix+zTrack.FreqHigh),a	; Frequency high byte  -> trackPtr + 0Eh
-    else
-	ld	(ix+zTrack.FreqHigh),d	; Frequency high byte  -> trackPtr + 0Eh
-    endif
+	ld	a,(de)
+	ld	(ix+zTrack.FreqLow),a		; Frequency low byte   -> trackPtr + 0Dh
+	inc	de
+	ld	a,(de)
+	or	c			; a = high bits of frequency (including octave bits, which were in c)
+	ld	(ix+zTrack.FreqHigh),a		; Frequency high byte  -> trackPtr + 0Eh
 	ret
 ; ---------------------------------------------------------------------------
 
@@ -897,17 +848,23 @@ zFMDoRest:
 
 ;zsub_2A9
 zSetDuration:
-	ld	c,a				; 'a' = current duration
-	ld	b,(ix+zTrack.TempoDivider)	; Divisor; causes multiplication of duration for every number higher than 1
-
--	djnz	+
+	call	zComputeNoteDuration
 	ld	(ix+zTrack.SavedDuration),a	; Store new duration into ticker goal of this track (this is reused if a note follows a note without a new duration)
 	ld	(ix+zTrack.DurationTimeout),a	; Sets it on ticker (counts to zero)
 	ret
-+
-	add	a,c				; Will multiply duration based on 'b'
-	jp	-
 ; End of function zSetDuration
+
+; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
+; Ported from S3K, multiplies the note by the tempo divider.
+
+zComputeNoteDuration:
+	ld	c,a				; 'a' = current duration
+	xor	a
+	ld	b,(ix+zTrack.TempoDivider)		; Divisor; causes multiplication of duration for every number higher than 1
+-	add	a,c				; Will multiply duration based on 'b'
+	djnz	-
+	ret
+; End of function zComputeNoteDuration
 
 ; ---------------------------------------------------------------------------
 
@@ -920,6 +877,7 @@ zFinishTrackUpdate:
 	ld	(ix+zTrack.DurationTimeout),a	; ... put into ticker
 	bit	4,(ix+zTrack.PlaybackControl)	; Is bit 4 (10h) "do not attack next note" set on playback?
 	ret	nz				; If so, quit
+
 	ld	a,(ix+zTrack.NoteFillMaster)	; Master "note fill" value -> a
 	ld	(ix+zTrack.NoteFillTimeout),a	; Reset 0Fh "note fill" value to master
 	ld	(ix+zTrack.VolFlutter),0	; Reset PSG flutter byte
@@ -1493,31 +1451,22 @@ zPlaySoundByIndex:
 	; Otherwise, this is a special command to the music engine...
 	sub	CmdID__First	; convert index 78-7D to a lookup into the following jump table
 	add	a,a
-	add	a,a
-	ld	(zloc_6D5+1),a	; store into the instruction after zloc_6D5 (self-modifying code)
+	add	a,zCommandIndex&0FFh
+	ld	(.writeme+1),a	; store into the instruction after zloc_6D5 (self-modifying code)
 
-zloc_6D5:
-	jr	$
+	ensure1byteoffset 0Ch
+.writeme:
+	ld	hl,(zCommandIndex)
+	jp	(hl)
 ; ---------------------------------------------------------------------------
 zCommandIndex:
 
-CmdPtr_StopSFX:		jp	zStopSoundEffects ; sound test index 78
-			db	0
-CmdPtr_FadeOut:		jp	zFadeOutMusic ; 79
-			db	0
-CmdPtr_SpeedUp:		jp	zSpeedUpMusic ; 7B
-			db	0
-CmdPtr_SlowDown:	jp	zSlowDownMusic ; 7C
-			db	0
-CmdPtr_Stop:		jp	zStopSoundAndMusic ; 7D
-			db	0
-CmdPtr_PALMode:		jp	zEnablePALMode ; 7E
-			db	0
+CmdPtr_StopSFX:		dw	zStopSoundEffects ; sound test index 78
+CmdPtr_FadeOut:		dw	zFadeOutMusic ; 79
+CmdPtr_SpeedUp:		dw	zSpeedUpMusic ; 7B
+CmdPtr_SlowDown:	dw	zSlowDownMusic ; 7C
+CmdPtr_Stop:		dw	zStopSoundAndMusic ; 7D
 CmdPtr__End:
-; ---------------------------------------------------------------------------
-; zloc_6EF:
-zEnablePALMode:
-	ret
 ; ---------------------------------------------------------------------------
 ; zloc_73D:
 zPlayMusic:
@@ -2574,8 +2523,7 @@ zBankSwitch:
 		rra
 		ld	(hl),a
 	endm
-	xor	a
-	ld	(hl),a
+	ld	(hl),h
 	ret
 ; End of function zBankSwitchToSound
 
@@ -2584,153 +2532,73 @@ zBankSwitch:
 ;zloc_C89
 zCoordFlag:
 	sub	0E0h
-    if OptimiseDriver
-	ld	c,a
 	add	a,a
-	add	a,c
-    else
-	add	a,a
-	add	a,a
-    endif
-	ld	(coordflagLookup+1),a	; store into the instruction after coordflagLookup (self-modifying code)
+	add	a,coordflagLookup&0FFh
+	ld	(.writeme+2),a
+.writeme:
+	ld	bc,(coordflagLookup)
+	ld	(.writeme2+1),bc ; store into the instruction after coordflagLookup (self-modifying code)
 	ld	a,(hl)
 	inc	hl
+.writeme2:
+	jp	$
 
 ; This is the lookup for Coordination flag routines
 
 ;zloc_C92
 coordflagLookup:
-	jr	$
 ; ---------------------------------------------------------------------------
-	jp	cfPanningAMSFMS		; E0
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfPanningAMSFMS		; E0
 ; ---------------------------------------------------------------------------
-	jp	cfDetune		; E1
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfDetune		; E1
 ; ---------------------------------------------------------------------------
-	jp	cfSetCommunication	; E2
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetCommunication	; E2
 ; ---------------------------------------------------------------------------
-	jp	cfJumpReturn		; E3
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfJumpReturn		; E3
 ; ---------------------------------------------------------------------------
-	jp	cfFadeInToPrevious	; E4
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfFadeInToPrevious	; E4
 ; ---------------------------------------------------------------------------
-	jp	cfSetTempoDivider	; E5
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetTempoDivider	; E5
 ; ---------------------------------------------------------------------------
-	jp	cfChangeFMVolume	; E6
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfChangeFMVolume	; E6
 ; ---------------------------------------------------------------------------
-	jp	cfPreventAttack		; E7
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfPreventAttack		; E7
 ; ---------------------------------------------------------------------------
-	jp	cfNoteFill		; E8
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfNoteFill		; E8
 ; ---------------------------------------------------------------------------
-	jp	cfChangeTransposition	; E9
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfChangeTransposition	; E9
 ; ---------------------------------------------------------------------------
-	jp	cfSetTempo		; EA
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetTempo		; EA
 ; ---------------------------------------------------------------------------
-	jp	cfSetTempoMod		; EB
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetTempoMod		; EB
 ; ---------------------------------------------------------------------------
-	jp	cfChangePSGVolume	; EC
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfChangePSGVolume	; EC
 ; ---------------------------------------------------------------------------
-	jp	cfClearPush		; ED
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfClearPush		; ED
 ; ---------------------------------------------------------------------------
-	jp	cfStopSpecialFM4	; EE
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfStopSpecialFM4	; EE
 ; ---------------------------------------------------------------------------
-	jp	cfSetVoice		; EF
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetVoice		; EF
 ; ---------------------------------------------------------------------------
-	jp	cfModulation		; F0
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfModulation		; F0
 ; ---------------------------------------------------------------------------
-	jp	cfEnableModulation	; F1
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfEnableModulation	; F1
 ; ---------------------------------------------------------------------------
-	jp	cfStopTrack		; F2
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfStopTrack		; F2
 ; ---------------------------------------------------------------------------
-	jp	cfSetPSGNoise		; F3
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetPSGNoise		; F3
 ; ---------------------------------------------------------------------------
-	jp	cfDisableModulation	; F4
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfDisableModulation	; F4
 ; ---------------------------------------------------------------------------
-	jp	cfSetPSGTone		; F5
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfSetPSGTone		; F5
 ; ---------------------------------------------------------------------------
-	jp	cfJumpTo		; F6
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfJumpTo		; F6
 ; ---------------------------------------------------------------------------
-	jp	cfRepeatAtPos		; F7
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfRepeatAtPos		; F7
 ; ---------------------------------------------------------------------------
-	jp	cfJumpToGosub		; F8
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfJumpToGosub		; F8
 ; ---------------------------------------------------------------------------
-	jp	cfOpF9			; F9
-    if OptimiseDriver=0
-	db	0
-    endif
+	dw	cfOpF9			; F9
 ; ---------------------------------------------------------------------------
 
 ; (via Saxman's doc): panning, AMS, FMS
@@ -3829,6 +3697,10 @@ zCurrentDACBank:	db 0
 
 
 ; end of Z80 'ROM'
-	if $>zMusicData
-		fatal "Your Z80 code won't fit before the music.. It's \{$-zMusicData}h bytes past the start of music data \{zMusicData}h"
+	if MOMPASS=1
+		if $>zMusicData
+			fatal "Your Z80 code won't fit before the music.. It's \{$-zMusicData}h bytes past the start of music data \{zMusicData}h"
+		else
+			message "Uncompressed sound driver size: $\{$} bytes."
+		endif
 	endif
