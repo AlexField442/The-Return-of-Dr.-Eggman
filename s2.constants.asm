@@ -6,7 +6,7 @@ NumberOfZones = $10	; change this when adding new zones!
 ; ---------------------------------------------------------------------------
 ; size variables - you'll get an informational error if you need to change these...
 ; they are all in units of bytes
-Size_of_Snd_driver_guess =	$E1D ; approximate post-compressed size of the Z80 sound driver
+Size_of_Snd_driver_guess =	$DEF ; approximate post-compressed size of the Z80 sound driver
 
 ; ---------------------------------------------------------------------------
 ; Object Status Table offsets (for everything between Object_RAM and Primary_Collision)
@@ -738,6 +738,7 @@ ObjID_ContinueText =		id(ObjPtr_ContinueText)		; DA
 ObjID_ContinueIcons =		id(ObjPtr_ContinueIcons)	; DA
 ObjID_ContinueChars =		id(ObjPtr_ContinueChars)	; DB
 ObjID_RingPrize =		id(ObjPtr_RingPrize)		; DC
+ObjID_Afterimages =		id(ObjPtr_Afterimages)		; DD
 
 ; Music IDs
 offset :=	zMasterPlaylist
@@ -1047,6 +1048,7 @@ TitleCard_Left:			; level title card: red part on the left
 				ds.b	object_size
 
 				; Reserved object RAM, free slots
+AfterImages:
 				ds.b	object_size
 				ds.b	object_size
 				ds.b	object_size
@@ -1063,9 +1065,9 @@ WaterSurface2:			; Second water surface
 Reserved_Object_RAM_End:
 
 Dynamic_Object_RAM:		; Dynamic object RAM
-				ds.b	$28*object_size
+				ds.b	$26*object_size
 Dynamic_Object_RAM_2P_End:	; SingleObjLoad stops searching here in 2P mode
-				ds.b	$48*object_size
+				ds.b	$46*object_size
 Dynamic_Object_RAM_End:
 
 LevelOnly_Object_RAM:
@@ -1098,7 +1100,7 @@ Tails_InvincibilityStars:
 LevelOnly_Object_RAM_End:
 
 Object_RAM_End:
-				ds.b	$800	; unused
+				ds.b	$880	; unused
 
 VDP_Command_Buffer:		ds.w	7*$12	; stores 18 ($12) VDP commands to issue the next time ProcessDMAQueue is called
 VDP_Command_Buffer_Slot:	ds.l	1	; stores the address of the next open slot for a queued VDP command
@@ -1243,9 +1245,8 @@ VDP_Reg1_val:			ds.w	1	; normal value of VDP register #1 when display is disable
 Demo_Time_left:			ds.w	1	; 2 bytes
 
 Vscroll_Factor:
-Vscroll_Factor_FG:			ds.w	1
-Vscroll_Factor_BG:			ds.w	1
-unk_F61A:			ds.l	1	; Only ever cleared, never used
+Vscroll_Factor_FG:		ds.w	1
+Vscroll_Factor_BG:		ds.w	1
 Vscroll_Factor_P2:
 Vscroll_Factor_P2_FG:		ds.w	1
 Vscroll_Factor_P2_BG:		ds.w	1
@@ -1256,6 +1257,7 @@ Palette_fade_range:				; Range affected by the palette fading routines
 Palette_fade_start:		ds.b	1	; Offset from the start of the palette to tell what range of the palette will be affected in the palette fading routines
 Palette_fade_length:		ds.b	1	; Number of entries to change in the palette fading routines
 
+				ds.l	1	; $FFFFF624-$FFFFF628 ; unused
 MiscLevelVariables:
 VIntSubE_RunCount:		ds.b	1
 				ds.b	1	; $FFFFF629 ; seems unused
@@ -1800,7 +1802,7 @@ SpecialStageResults:
 				ds.b	$C*object_size
 SpecialStageResults2:
 				ds.b	object_size
-				ds.b	$51*object_size
+				ds.b	$4C*object_size
 SS_Dynamic_Object_RAM_End:
 				ds.b	object_size
 SS_Object_RAM_End:
@@ -1916,13 +1918,6 @@ VSResults_HUD:			; Blinking text at the bottom of the screen
 				; Free slots
 				ds.b	$7F*object_size
 VSRslts_Object_RAM_End:
-
-
-; RAM variables - Menu screens
-	phase	Object_RAM	; Move back to the object RAM
-Menus_Object_RAM:		; No objects are loaded in the menu screens
-				ds.b	$80*object_size
-Menus_Object_RAM_End:
 
 
 ; RAM variables - Ending sequence
