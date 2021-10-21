@@ -3238,7 +3238,8 @@ zMasterPlaylist:
 ; 40h is a flag that forces PAL mode off when set
 
 zMusIDPtr_2PResult: 	zmakePlaylistEntry Mus_2PResult,0
-zMusIDPtr_EHZ:		zmakePlaylistEntry Mus_EHZ,0
+zMusIDPtr_EHZ1:		zmakePlaylistEntry Mus_EHZ1,0
+zMusIDPtr_EHZ2:		zmakePlaylistEntry Mus_EHZ2,20h
 zMusIDPtr_MCZ_2P:	zmakePlaylistEntry Mus_MCZ_2P,0
 zMusIDPtr_OOZ:		zmakePlaylistEntry Mus_OOZ,0
 zMusIDPtr_MTZ:		zmakePlaylistEntry Mus_MTZ,0
@@ -3247,7 +3248,8 @@ zMusIDPtr_ARZ:		zmakePlaylistEntry Mus_ARZ,0
 zMusIDPtr_CNZ_2P:	zmakePlaylistEntry Mus_CNZ_2P,0
 zMusIDPtr_CNZ:		zmakePlaylistEntry Mus_CNZ,0
 zMusIDPtr_DEZ2:		zmakePlaylistEntry Mus_DEZ2,0
-zMusIDPtr_MCZ:		zmakePlaylistEntry Mus_MCZ,0
+zMusIDPtr_MCZ1:		zmakePlaylistEntry Mus_MCZ1,0
+zMusIDPtr_MCZ2:		zmakePlaylistEntry Mus_MCZ2,20h
 zMusIDPtr_EHZ_2P:	zmakePlaylistEntry Mus_EHZ_2P,0
 zMusIDPtr_SCZ:		zmakePlaylistEntry Mus_SCZ,0
 zMusIDPtr_CPZ:		zmakePlaylistEntry Mus_CPZ,0
@@ -3269,7 +3271,6 @@ zMusIDPtr_Emerald:	zmakePlaylistEntry Mus_Emerald,20h
 zMusIDPtr_Credits:	zmakePlaylistEntry Mus_Credits,60h
 zMusIDPtr_Countdown:	zmakePlaylistEntry Mus_Drowning,40h
 	; New songs here
-zMusIDPtr_EHZ2:		zmakePlaylistEntry Mus_EHZ2,20h
 zMusIDPtr_DEZ1:		zmakePlaylistEntry Mus_DEZ1,20h
 zMusIDPtr_RWZ2:		zmakePlaylistEntry Mus_RWZ2,20h
 zMusIDPtr_OWZ1:		zmakePlaylistEntry Mus_OWZ1,20h
@@ -3286,16 +3287,26 @@ zs1TempotoS3 function n,zs2TempotoS3(zs1TempotoS2(n))
 ; Tempo with speed shoe tempo for each song
 ;zbyte_1214
 zSpedUpTempoTable:
-	db	 68h,0BEh,0FFh,0F0h
-	db	0FFh,0DEh,0FFh,0DDh
-	db	 68h, 80h,0D6h, 7Bh
+	db	 68h		; 2P Result
+	db	0BEh		; EHZ1
+	db	0BEh		; EHZ2
+	db	0FFh		; MCZ 2P
+	db	0F0h		; OOZ
+	db	0FFh		; MTZ
+	db	0DEh		; HTZ
+	db	0FFh		; ARZ
+	db	0DDh		; CNZ 2P
+	db	68h		; DEZ2
+	db	80h		; MCZ1
+	db	82h		; MCZ2
+	db	0D6h
+	db	7Bh
 	db	 7Bh,0FFh,0A8h,0FFh
 	db	 87h,0FFh,0FFh,0C9h
 	db	 97h,0FFh,0FFh,0CDh
 	db	0CDh,0AAh,0F2h,0DBh
 	db	0D5h,0F0h, 80h
 	; New songs here
-	db	0BEh	; Emerald Hill Zone Act 2
 	db	0FFh	; Death Egg Zone Act 1
 	db	0FFh	; Unused for now
 	db	0FEh	; Ocean Wind Zone

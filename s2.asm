@@ -3822,7 +3822,7 @@ JmpTo_SwScrl_Title ; JmpTo
 ;----------------------------------------------------------------------------
 ; byte_3EA0:
 MusicList: zoneOrderedTable 1,2
-	zoneTableEntry.b MusID_EHZ	; 0 ; EHZ1
+	zoneTableEntry.b MusID_EHZ1	; 0 ; EHZ1
 	zoneTableEntry.b MusID_EHZ2	; 0 ; EHZ2
 	zoneTableEntry.b MusID_OWZ1	; 1 ; OWZ1
 	zoneTableEntry.b MusID_OWZ1	; 1 ; OWZ2
@@ -3844,8 +3844,8 @@ MusicList: zoneOrderedTable 1,2
 	zoneTableEntry.b MusID_SCZ	; 9
 	zoneTableEntry.b MusID_CNZ_2P	; 10 ; OOZ1
 	zoneTableEntry.b MusID_CNZ_2P	; 10 ; OOZ2
-	zoneTableEntry.b MusID_MCZ	; 11 ; MCZ1
-	zoneTableEntry.b MusID_MCZ	; 11 ; MCZ2
+	zoneTableEntry.b MusID_MCZ1	; 11 ; MCZ1
+	zoneTableEntry.b MusID_MCZ2	; 11 ; MCZ2
 	zoneTableEntry.b MusID_CNZ	; 12 ; CNZ1
 	zoneTableEntry.b MusID_CNZ2	; 12 ; CNZ2
 	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ1
@@ -23685,7 +23685,7 @@ Obj25_Init:
 Obj25_Animate:
 	move.b	(Rings_anim_frame).w,mapping_frame(a0)
 	move.w	objoff_32(a0),d0
-	bra.w	MarkObjGone2
+	bra.w	MarkObjGone
 ; ===========================================================================
 ; Obj_25_sub_4:
 Obj25_Collect:
@@ -26289,14 +26289,11 @@ loc_1428C:
 	move.w	(a1,d0.w),d0
 	tst.w	d0
 	bpl.s	loc_1429C
--	move.b	#GameModeID_SegaScreen,(Game_Mode).w ; => SegaScreen
+	move.b	#GameModeID_SegaScreen,(Game_Mode).w ; => SegaScreen
 	rts
 ; ===========================================================================
 
 loc_1429C:
-	cmpi.w	#$5555,d0		; is entry $5555
-	beq.s	-			; if yes, branch
-
 	move.w	d0,(Current_ZoneAndAct).w
 	clr.b	(Last_star_pole_hit).w
 	clr.b	(Last_star_pole_hit_2P).w
@@ -48127,8 +48124,7 @@ loc_212C4:
 	move.b	#AniIDSonAni_Roll,anim(a1)
 	addq.w	#5,y_pos(a1)
 	move.w	#SndID_Roll,d0
-	jsr	(PlaySound).l
-	rts
+	jmp	(PlaySound).l
 
 ; ===========================================================================
 ; loc_212F6:
@@ -62206,6 +62202,7 @@ ObjD9_CheckCharacter:
 	beq.s	loc_2C9A0
 	andi.b	#button_B_mask|button_C_mask|button_A_mask,d0
 	beq.w	ObjD9_CheckCharacter_End
+	clr.b	double_jump_flag(a1)
 	clr.b	obj_control(a1)
 	clr.b	(a2)
 	move.b	#$12,2(a2)
@@ -93686,6 +93683,7 @@ Mus_OWZ1:	include		"sound/music/OWZ1.asm"
 Mus_MTZ3:	include		"sound/music/MTZ3.asm"
 Mus_CNZ2:	include		"sound/music/CNZ2.asm"
 Mus_BLZ1:	include		"sound/music/BLZ1.asm"
+Mus_MCZ2:	include		"sound/music/_RAW songs/MCZ2.asm"
 	finishBank
 
 ; ---------------------------------------------------------------------------
@@ -93863,11 +93861,11 @@ Mus_HPZ:	BINCLUDE	"sound/music/HPZ.bin"
 Mus_Drowning:	BINCLUDE	"sound/music/Drowning.bin"
 Mus_Invincible:	BINCLUDE	"sound/music/Invincible.bin"
 Mus_CNZ_2P:	BINCLUDE	"sound/music/CNZ_2p.bin"
-Mus_EHZ:	BINCLUDE	"sound/music/EHZ.bin"
+Mus_EHZ1:	BINCLUDE	"sound/music/EHZ1.bin"
 Mus_MTZ:	BINCLUDE	"sound/music/MTZ.bin"
 Mus_MTZ2:	include		"sound/music/MTZ2.asm"
 Mus_CNZ:	BINCLUDE	"sound/music/CNZ.bin"
-Mus_MCZ:	BINCLUDE	"sound/music/MCZ.bin"
+Mus_MCZ1:	BINCLUDE	"sound/music/MCZ1.bin"
 Mus_MCZ_2P:	BINCLUDE	"sound/music/MCZ_2p.bin"
 Mus_ARZ:	BINCLUDE	"sound/music/ARZ.bin"
 Mus_DEZ2:	BINCLUDE	"sound/music/DEZ.bin"
