@@ -3244,15 +3244,15 @@ zMusIDPtr_MCZ_2P:	zmakePlaylistEntry Mus_MCZ_2P,0
 zMusIDPtr_OOZ:		zmakePlaylistEntry Mus_OOZ,0
 zMusIDPtr_MTZ:		zmakePlaylistEntry Mus_MTZ,0
 zMusIDPtr_HTZ:		zmakePlaylistEntry Mus_HTZ,0
-zMusIDPtr_ARZ:		zmakePlaylistEntry Mus_ARZ,0
+zMusIDPtr_ARZ1:		zmakePlaylistEntry Mus_ARZ1,0
 zMusIDPtr_CNZ_2P:	zmakePlaylistEntry Mus_CNZ_2P,0
-zMusIDPtr_CNZ:		zmakePlaylistEntry Mus_CNZ,0
+zMusIDPtr_CNZ:		zmakePlaylistEntry Mus_CNZ,20h
 zMusIDPtr_DEZ2:		zmakePlaylistEntry Mus_DEZ2,0
 zMusIDPtr_MCZ1:		zmakePlaylistEntry Mus_MCZ1,0
 zMusIDPtr_MCZ2:		zmakePlaylistEntry Mus_MCZ2,20h
 zMusIDPtr_EHZ_2P:	zmakePlaylistEntry Mus_EHZ_2P,0
-zMusIDPtr_SCZ:		zmakePlaylistEntry Mus_SCZ,0
-zMusIDPtr_CPZ:		zmakePlaylistEntry Mus_CPZ,0
+zMusIDPtr_SCZ:		zmakePlaylistEntry Mus_SCZ,20h
+zMusIDPtr_CPZ1:		zmakePlaylistEntry Mus_CPZ1,20h
 zMusIDPtr_WFZ:		zmakePlaylistEntry Mus_WFZ,0
 zMusIDPtr_HPZ:		zmakePlaylistEntry Mus_HPZ,0
 zMusIDPtr_Options:	zmakePlaylistEntry Mus_Options,0
@@ -3278,6 +3278,8 @@ zMusIDPtr_MTZ2:		zmakePlaylistEntry Mus_MTZ2,20h
 zMusIDPtr_MTZ3:		zmakePlaylistEntry Mus_MTZ3,20h
 zMusIDPtr_CNZ2:		zmakePlaylistEntry Mus_CNZ2,20h
 zMusIDPtr_BLZ1:		zmakePlaylistEntry Mus_BLZ1,20h
+zMusIDPtr_CPZ2:		zmakePlaylistEntry Mus_CPZ2,20h
+zMusIDPtr_ARZ2:		zmakePlaylistEntry Mus_ARZ2,20h
 zMusIDPtr__End:
 
 zs1TempotoS2 function n,((((conv0To256(n)-1)<<8)+(conv0To256(n)>>1))/conv0To256(n))&0FFh
@@ -3314,6 +3316,8 @@ zSpedUpTempoTable:
 	db	0FCh	; Metropolis Zone Act 3
 	db	038h	; Casino Night Zone Act 2
 	db	0FFh	; Blue Lake Zone Act 1
+	db	0EFh	; Chemical Plant Zone Act 2
+	db	0FFh	; Aquatic Ruin Zone Act 2
 	; DAC sample pointers and lengths
 	ensure1byteoffset 30h
 
@@ -3384,8 +3388,10 @@ idstart :=	80h
 	db	id(zDACPtr_Sample9),14h+3	; 94h
 	db	id(zDACPtr_Sample9),1Ah+3	; 95h
 	db	id(zDACPtr_Sample9),20h+3	; 96h
+	db	id(zDACPtr_Sample8),8+3		; 97h
+	db	id(zDACPtr_Sample2),6+3		; 98h
 
-	ensure1byteoffset 9
+	ensure1byteoffset 0Ah
 zDACBanks:
 	db zmake68kBank(SndDAC_Sample1)
 	db zmake68kBank(SndDAC_Sample2)

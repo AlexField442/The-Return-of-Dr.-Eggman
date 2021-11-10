@@ -46,6 +46,8 @@ useFullWaterTables = 1
 ;	| Set to 1 if you've shifted level IDs around or you want water in levels with a level slot below 8
 DebugVersion = 1
 
+LessLagVersion = 0
+
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; AS-specific macros and assembler settings
 	CPU 68000
@@ -3848,12 +3850,12 @@ MusicList: zoneOrderedTable 1,2
 	zoneTableEntry.b MusID_MCZ2	; 11 ; MCZ2
 	zoneTableEntry.b MusID_CNZ	; 12 ; CNZ1
 	zoneTableEntry.b MusID_CNZ2	; 12 ; CNZ2
-	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ1
-	zoneTableEntry.b MusID_CPZ	; 13 ; CPZ2
+	zoneTableEntry.b MusID_CPZ1	; 13 ; CPZ1
+	zoneTableEntry.b MusID_CPZ2	; 13 ; CPZ2
 	zoneTableEntry.b MusID_DEZ1	; 14 ; DEZ1
 	zoneTableEntry.b MusID_DEZ2	; 14 ; DEZ2
-	zoneTableEntry.b MusID_ARZ	; 15 ; ARZ1
-	zoneTableEntry.b MusID_ARZ	; 15 ; ARZ2
+	zoneTableEntry.b MusID_ARZ1	; 15 ; ARZ1
+	zoneTableEntry.b MusID_ARZ2	; 15 ; ARZ2
 	zoneTableEntry.b MusID_SCZ	; 16 ; SCZ1
 	zoneTableEntry.b MusID_SCZ	; 16 ; SCZ2
     zoneTableEnd
@@ -14081,7 +14083,7 @@ LevelSize: zoneOrderedTable 2,8	; WrdArr_LvlSize
 	zoneTableEntry.w	$0,	$3FFF,	-$100,	$800
 	zoneTableEntry.w	$0,	$3FFF,	$0,	$720	; WFZ
 	zoneTableEntry.w	$0,	$3FFF,	$0,	$720
-	zoneTableEntry.w	$0,	$2800,	$0,	$720	; HTZ act 1
+	zoneTableEntry.w	$0,	$2820,	$0,	$720	; HTZ act 1
 	zoneTableEntry.w	$0,	$3280,	$0,	$720	; HTZ act 2
 	zoneTableEntry.w	$0,	$23BC,	$0,	$720	; HPZ act 1
 	zoneTableEntry.w	$0,	$3FFF,	$0,	$720	; HPZ act 2
@@ -17043,6 +17045,7 @@ SwScrl_DEZ_RowHeights:
 	even
 ; ============================================================================
 SwScrl_Water:
+    if LessLagVersion=0
 	; this adds the LZ water ripple effect to any level
 	lea	Water_FGDeform(pc),a3
 	lea	Water_BGDeform(pc),a2
@@ -17084,6 +17087,7 @@ SwScrl_Water_doRipple:
 	addq.b	#1,d2
 	addq.b	#1,d3
 	dbf	d1,SwScrl_Water_doRipple
+    endif
 	rts
 ; ===========================================================================
 Water_FGDeform:	dc.w   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  0,  0,  0,  0
@@ -19749,16 +19753,16 @@ LevEvents_HTZ:
 ; ===========================================================================
 ; off_E99C:
 LevEvents_HTZ_Index: offsetTable
-	offsetTableEntry.w LevEvents_HTZ_Routine1	; 0 left of earthquake
-	offsetTableEntry.w LevEvents_HTZ_Routine2	; 2 earthquake
-	offsetTableEntry.w LevEvents_HTZ_Routine3	; 4 right of earthquake
+	offsetTableEntry.w LevEvents_HTZ_Routine2	; 2 left of earthquake
+	offsetTableEntry.w LevEvents_HTZ_Routine3	; 4 earthquake
+	offsetTableEntry.w LevEvents_HTZ_Routine4	; 6 right of earthquake
 ; ===========================================================================
 ; loc_E9A2:
-LevEvents_HTZ_Routine1:
+LevEvents_HTZ_Routine2:
 	cmpi.w	#$400,(Camera_Y_pos).w
-	blo.s	LevEvents_HTZ_Routine1_Part2
+	blo.s	LevEvents_HTZ_Routine2_Part2
 	cmpi.w	#$1800,(Camera_X_pos).w
-	blo.s	LevEvents_HTZ_Routine1_Part2
+	blo.s	LevEvents_HTZ_Routine2_Part2
 	move.b	#1,(Screen_Shaking_Flag_HTZ).w
 	move.l	(Camera_X_pos).w,(Camera_BG_X_pos).w
 	move.l	(Camera_Y_pos).w,(Camera_BG_Y_pos).w
@@ -19769,12 +19773,12 @@ LevEvents_HTZ_Routine1:
 	move.w	#320,(Camera_BG_Y_offset).w
 	subi.w	#$100,(Camera_BG_Y_pos).w
 	move.w	#0,(HTZ_Terrain_Delay).w
-	addq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine2
+	addq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine3
 -
 	rts
 ; ===========================================================================
 
-LevEvents_HTZ_Routine1_Part2:
+LevEvents_HTZ_Routine2_Part2:
 	tst.b	(Screen_Shaking_Flag_HTZ).w
 	beq.s	-	; rts
 	move.w	#$200,d0
@@ -19788,13 +19792,13 @@ LevEvents_HTZ_Routine1_Part2:
 	rts
 ; ===========================================================================
 ; loc_EA0E:
-LevEvents_HTZ_Routine2:
+LevEvents_HTZ_Routine3:
 	cmpi.w	#$1978,(Camera_X_pos).w
-	blo.w	LevEvents_HTZ_Routine2_Continue
+	blo.w	LevEvents_HTZ_Routine3_Continue
 	cmpi.w	#$1E00,(Camera_X_pos).w
 	blo.s	.keep_shaking
 	move.b	#0,(Screen_Shaking_Flag).w
-	bra.s	LevEvents_HTZ_Routine2_Continue
+	bra.s	LevEvents_HTZ_Routine3_Continue
 ; ---------------------------------------------------------------------------
 .keep_shaking:
 	tst.b	(HTZ_Terrain_Direction).w
@@ -19804,13 +19808,13 @@ LevEvents_HTZ_Routine2:
 	move.w	(Timer_frames).w,d0
 	move.w	d0,d1
 	andi.w	#3,d0
-	bne.s	LevEvents_HTZ_Routine2_Continue
+	bne.s	LevEvents_HTZ_Routine3_Continue
 	addq.w	#1,(Camera_BG_Y_offset).w
 	andi.w	#$3F,d1
-	bne.s	LevEvents_HTZ_Routine2_Continue
+	bne.s	LevEvents_HTZ_Routine3_Continue
 	move.w	#SndID_Rumbling2,d0 ; rumbling sound
 	jsr	(PlaySound).l
-	bra.s	LevEvents_HTZ_Routine2_Continue
+	bra.s	LevEvents_HTZ_Routine3_Continue
 ; ---------------------------------------------------------------------------
 .sinking:
 	cmpi.w	#224,(Camera_BG_Y_offset).w
@@ -19818,24 +19822,24 @@ LevEvents_HTZ_Routine2:
 	move.w	(Timer_frames).w,d0
 	move.w	d0,d1
 	andi.w	#3,d0
-	bne.s	LevEvents_HTZ_Routine2_Continue
+	bne.s	LevEvents_HTZ_Routine3_Continue
 	subq.w	#1,(Camera_BG_Y_offset).w
 	andi.w	#$3F,d1
-	bne.s	LevEvents_HTZ_Routine2_Continue
+	bne.s	LevEvents_HTZ_Routine3_Continue
 	move.w	#SndID_Rumbling2,d0
 	jsr	(PlaySound).l
-	bra.s	LevEvents_HTZ_Routine2_Continue
+	bra.s	LevEvents_HTZ_Routine3_Continue
 ; ---------------------------------------------------------------------------
 .flip_delay:
 	move.b	#0,(Screen_Shaking_Flag).w
 	subq.w	#1,(HTZ_Terrain_Delay).w
-	bpl.s	LevEvents_HTZ_Routine2_Continue
+	bpl.s	LevEvents_HTZ_Routine3_Continue
 	move.w	#$78,(HTZ_Terrain_Delay).w
 	eori.b	#1,(HTZ_Terrain_Direction).w
 	move.b	#1,(Screen_Shaking_Flag).w
 
 ; loc_EAA0:
-LevEvents_HTZ_Routine2_Continue:
+LevEvents_HTZ_Routine3_Continue:
 	cmpi.w	#$1800,(Camera_X_pos).w
 	blo.s	.exit_left
 	cmpi.w	#$1F00,(Camera_X_pos).w
@@ -19852,7 +19856,7 @@ LevEvents_HTZ_Routine2_Continue:
 	move.l	d0,(Camera_BG_Y_pos).w
 	move.l	d0,(Camera_BG_X_offset).w
 	move.b	d0,(HTZ_Terrain_Direction).w
-	subq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine1
+	subq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine2
 	move.w	#MusID_StopSFX,d0
 	jsr	(PlaySound).l
 	rts
@@ -19863,16 +19867,16 @@ LevEvents_HTZ_Routine2_Continue:
 	move.l	d0,(Camera_BG_Y_pos).w
 	move.l	d0,(Camera_BG_X_offset).w
 	move.b	d0,(HTZ_Terrain_Direction).w
-	addq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine3
+	addq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine4
 	move.w	#MusID_StopSFX,d0
 	jsr	(PlaySound).l
 	rts
 
 ; ===========================================================================
 ; loc_EB14:
-LevEvents_HTZ_Routine3:
+LevEvents_HTZ_Routine4:
 	cmpi.w	#$1F00,(Camera_X_pos).w
-	bhs.s	LevEvents_HTZ_Routine3_Part2
+	bhs.s	LevEvents_HTZ_Routine4_Part2
 	move.b	#1,(Screen_Shaking_Flag_HTZ).w
 	move.l	(Camera_X_pos).w,(Camera_BG_X_pos).w
 	move.l	(Camera_Y_pos).w,(Camera_BG_Y_pos).w
@@ -19883,12 +19887,12 @@ LevEvents_HTZ_Routine3:
 	move.w	#320,(Camera_BG_Y_offset).w
 	subi.w	#$100,(Camera_BG_Y_pos).w
 	move.w	#0,(HTZ_Terrain_Delay).w
-	subq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine2
+	subq.b	#2,(Dynamic_Resize_Routine).w ; => LevEvents_HTZ_Routine3
 -
 	rts
 ; ---------------------------------------------------------------------------
 ; loc_EB54:
-LevEvents_HTZ_Routine3_Part2:
+LevEvents_HTZ_Routine4_Part2:
 	tst.b	(Screen_Shaking_Flag_HTZ).w
 	beq.s	-	; rts
 	move.w	#$200,d0
@@ -39164,15 +39168,15 @@ TailsAni_Dummy5:	dc.b   3,  1,  2,  3,  4,  5,  6,  7,  8,$FF
 TailsAni_HaulAss:	dc.b $FF,$32,$33,$FF
 			dc.b $FF,$FF,$FF,$FF,$FF,$FF
 	rev02even
-TailsAni_Fly:		dc.b   1,$5E,$5F,$FF
+TailsAni_Fly:		dc.b   1,$8B,$8C,$FF
 	rev02even
-TailsAni_Fly2:		dc.b   0,$5E,$5F,$FF
+TailsAni_Fly2:		dc.b   0,$8B,$8C,$FF
 	rev02even
-TailsAni_FlyCarry:		dc.b   1,$5E,$5F,$FF
+TailsAni_FlyCarry:	dc.b   1,$8B,$8C,$FF
 	rev02even
-TailsAni_FlyCarry2:		dc.b   0,$5E,$5F,$FF
+TailsAni_FlyCarry2:	dc.b   0,$8B,$8C,$FF
 	rev02even
-TailsAni_FlyTired:		dc.b   5,$8B,$8C,$8D,$8E,$FF
+TailsAni_FlyTired:	dc.b   5,$8D,$8E,$8F,$90,$FF
 	even
 
 ; ===========================================================================
@@ -74265,6 +74269,10 @@ Obj59_Init:
 	move.b	#4,priority(a0)
 	move.w	#$36,objoff_30(a0)
 	move.b	#$40,angle(a0)
+
+	move.w	#MusID_FadeOut,d0
+	jsr	(PlayMusic).l
+
 	bsr.w	loc_3529C
 
 loc_36022:
@@ -74356,8 +74364,6 @@ loc_360F0:
 	blo.s	return_36140
 	tst.b	objoff_3E(a0)
 	bne.s	loc_3610C
-	move.w	#MusID_FadeOut,d0
-	jsr	(PlayMusic).l
 	st	objoff_3E(a0)
 
 loc_3610C:
@@ -87772,8 +87778,6 @@ Dynamic_Null:
 ; ===========================================================================
 
 Dynamic_HTZ:
-	tst.w	(Two_player_mode).w
-	bne.w	Dynamic_Normal
 	lea	(Anim_Counters).w,a3
 	moveq	#0,d0
 	move.w	(Camera_X_pos).w,d1
@@ -93683,6 +93687,7 @@ Mus_OWZ1:	include		"sound/music/OWZ1.asm"
 Mus_MTZ3:	include		"sound/music/MTZ3.asm"
 Mus_CNZ2:	include		"sound/music/CNZ2.asm"
 Mus_BLZ1:	include		"sound/music/BLZ1.asm"
+Mus_ARZ2:	include		"sound/music/ARZ2.asm"
 Mus_MCZ2:	include		"sound/music/_RAW songs/MCZ2.asm"
 	finishBank
 
@@ -93864,18 +93869,19 @@ Mus_CNZ_2P:	BINCLUDE	"sound/music/CNZ_2p.bin"
 Mus_EHZ1:	BINCLUDE	"sound/music/EHZ1.bin"
 Mus_MTZ:	BINCLUDE	"sound/music/MTZ.bin"
 Mus_MTZ2:	include		"sound/music/MTZ2.asm"
-Mus_CNZ:	BINCLUDE	"sound/music/CNZ.bin"
+Mus_CNZ:	include		"sound/music/CNZ1.asm"
 Mus_MCZ1:	BINCLUDE	"sound/music/MCZ1.bin"
 Mus_MCZ_2P:	BINCLUDE	"sound/music/MCZ_2p.bin"
-Mus_ARZ:	BINCLUDE	"sound/music/ARZ.bin"
+Mus_ARZ1:	BINCLUDE	"sound/music/ARZ1.bin"
 Mus_DEZ2:	BINCLUDE	"sound/music/DEZ.bin"
 Mus_SpecStage:	BINCLUDE	"sound/music/SpecStg.bin"
 Mus_Options:	BINCLUDE	"sound/music/Options.bin"
 Mus_Ending:	BINCLUDE	"sound/music/Ending.bin"
 Mus_EndBoss:	BINCLUDE	"sound/music/End_Boss.bin"
-Mus_CPZ:	BINCLUDE	"sound/music/CPZ.bin"
+Mus_CPZ1:	include		"sound/music/CPZ1.asm"
+Mus_CPZ2:	include		"sound/music/CPZ2.asm"
 Mus_Boss:	BINCLUDE	"sound/music/Boss.bin"
-Mus_SCZ:	BINCLUDE	"sound/music/SCZ.bin"
+Mus_SCZ:	include		"sound/music/SCZ.asm"
 Mus_OOZ:	BINCLUDE	"sound/music/OOZ.bin"
 Mus_WFZ:	BINCLUDE	"sound/music/WFZ.bin"
 Mus_EHZ_2P:	BINCLUDE	"sound/music/EHZ_2p.bin"

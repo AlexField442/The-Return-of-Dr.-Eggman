@@ -13,7 +13,7 @@ OWZ1_Header:
 	smpsHeaderFM        OWZ1_FM6,	$00, $12
 	smpsHeaderPSG       OWZ1_PSG1,	$DC, $07, $00, $00
 	smpsHeaderPSG       OWZ1_PSG2,	$DC, $05, $00, $00
-	smpsHeaderPSG       OWZ1_PSG3,	$F7, $01, $00, fTone_04
+	smpsHeaderPSG       OWZ1_PSG3,	$01, $02, $00, fTone_03
 
 ; FM2 Data
 OWZ1_FM2:
@@ -890,17 +890,15 @@ OWZ1_Loop1A:
 
 ; PSG3 Data
 OWZ1_PSG3:
-	smpsPSGvoice        fTone_03
 	smpsPSGform         $E7
-	smpsPSGAlterVol     $04
 
 OWZ1_Jump02:
 	smpsNoteFill        $02
-	dc.b	nB6, $06, nB6, $06
+	dc.b	nMaxPSG, $06, nMaxPSG, $06
 	smpsPSGAlterVol     $FE
-	dc.b	nB6, $06
+	dc.b	nMaxPSG, $06
 	smpsPSGAlterVol     $02
-	dc.b	nB6, $06
+	dc.b	nMaxPSG, $06
 	smpsJump            OWZ1_Jump02
 
 ; DAC Data

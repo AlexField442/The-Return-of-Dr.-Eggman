@@ -6,7 +6,7 @@ NumberOfZones = $10	; change this when adding new zones!
 ; ---------------------------------------------------------------------------
 ; size variables - you'll get an informational error if you need to change these...
 ; they are all in units of bytes
-Size_of_Snd_driver_guess =	$DEF ; approximate post-compressed size of the Z80 sound driver
+Size_of_Snd_driver_guess =	$E00 ; approximate post-compressed size of the Z80 sound driver
 
 ; ---------------------------------------------------------------------------
 ; Object Status Table offsets (for everything between Object_RAM and Primary_Collision)
@@ -755,7 +755,7 @@ MusID_MCZ_2P =		id(zMusIDPtr_MCZ_2P)	; 83
 MusID_OOZ =		id(zMusIDPtr_OOZ)	; 84
 MusID_MTZ =		id(zMusIDPtr_MTZ)	; 85
 MusID_HTZ =		id(zMusIDPtr_HTZ)	; 86
-MusID_ARZ =		id(zMusIDPtr_ARZ)	; 87
+MusID_ARZ1 =		id(zMusIDPtr_ARZ1)	; 87
 MusID_CNZ_2P =		id(zMusIDPtr_CNZ_2P)	; 88
 MusID_CNZ =		id(zMusIDPtr_CNZ)	; 89
 MusID_DEZ2 =		id(zMusIDPtr_DEZ2)	; 8A
@@ -763,7 +763,7 @@ MusID_MCZ1 =		id(zMusIDPtr_MCZ1)
 MusID_MCZ2 =		id(zMusIDPtr_MCZ2)
 MusID_EHZ_2P =		id(zMusIDPtr_EHZ_2P)	; 8C
 MusID_SCZ =		id(zMusIDPtr_SCZ)	; 8D
-MusID_CPZ =		id(zMusIDPtr_CPZ)	; 8E
+MusID_CPZ1 =		id(zMusIDPtr_CPZ1)	; 8E
 MusID_WFZ =		id(zMusIDPtr_WFZ)	; 8F
 MusID_HPZ =		id(zMusIDPtr_HPZ)	; 90
 MusID_Options =		id(zMusIDPtr_Options)	; 91
@@ -788,6 +788,8 @@ MusID_MTZ2 =		id(zMusIDPtr_MTZ2)
 MusID_MTZ3 =		id(zMusIDPtr_MTZ3)
 MusID_CNZ2 =		id(zMusIDPtr_CNZ2)
 MusID_BLZ1 =		id(zMusIDPtr_BLZ1)
+MusID_CPZ2 =		id(zMusIDPtr_CPZ2)
+MusID_ARZ2 =		id(zMusIDPtr_ARZ2)
 MusID__End =		id(zMusIDPtr__End)
 
 ; Sound IDs
@@ -1066,9 +1068,9 @@ WaterSurface2:			; Second water surface
 Reserved_Object_RAM_End:
 
 Dynamic_Object_RAM:		; Dynamic object RAM
-				ds.b	$26*object_size
+				ds.b	$28*object_size
 Dynamic_Object_RAM_2P_End:	; SingleObjLoad stops searching here in 2P mode
-				ds.b	$46*object_size
+				ds.b	$48*object_size
 Dynamic_Object_RAM_End:
 
 LevelOnly_Object_RAM:
@@ -1101,7 +1103,7 @@ Tails_InvincibilityStars:
 LevelOnly_Object_RAM_End:
 
 Object_RAM_End:
-				ds.b	$880	; unused
+				ds.b	$800	; unused
 
 VDP_Command_Buffer:		ds.w	7*$12	; stores 18 ($12) VDP commands to issue the next time ProcessDMAQueue is called
 VDP_Command_Buffer_Slot:	ds.l	1	; stores the address of the next open slot for a queued VDP command
@@ -1803,7 +1805,7 @@ SpecialStageResults:
 				ds.b	$C*object_size
 SpecialStageResults2:
 				ds.b	object_size
-				ds.b	$4C*object_size
+				ds.b	$51*object_size
 SS_Dynamic_Object_RAM_End:
 				ds.b	object_size
 SS_Object_RAM_End:
